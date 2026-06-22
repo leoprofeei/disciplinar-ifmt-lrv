@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Disciplinar Discente — IFMT Campus Lucas do Rio Verde</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- TELA DE LOGIN -->
+  <div id="tela-login" class="tela-centralizada" style="display:none;">
+    <div class="cartao-login">
+
+      <div id="bloco-login">
+        <h2>Controle Disciplinar Discente</h2>
+        <p class="descricao">IFMT Campus Lucas do Rio Verde — acesso restrito a Coordenação de Curso e Chefia do Departamento de Ensino</p>
+        <form id="form-login">
+          <label for="login-email">E-mail institucional</label>
+          <input type="email" id="login-email" required>
+          <label for="login-senha">Senha</label>
+          <input type="password" id="login-senha" required>
+          <button type="submit" class="btn-primario">Entrar</button>
+          <p class="msg" id="login-msg"></p>
+        </form>
+        <p class="rodape-login">Não tem conta? <button class="btn-link" id="btn-mostrar-cadastro">Cadastre-se</button></p>
+      </div>
+
+      <div id="bloco-cadastro" style="display:none;">
+        <h2>Criar conta</h2>
+        <p class="descricao">Seu acesso ficará pendente até ser aprovado pelo administrador do sistema.</p>
+        <form id="form-cadastro">
+          <label for="cad-nome">Nome completo</label>
+          <input type="text" id="cad-nome" required>
+          <label for="cad-email">E-mail institucional</label>
+          <input type="email" id="cad-email" required>
+          <label for="cad-senha">Senha (mínimo 6 caracteres)</label>
+          <input type="password" id="cad-senha" minlength="6" required>
+          <button type="submit" class="btn-primario">Criar conta</button>
+          <p class="msg" id="cadastro-msg"></p>
+        </form>
+        <p class="rodape-login">Já tem conta? <button class="btn-link" id="btn-mostrar-login">Entrar</button></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TELA DE PENDENTE -->
+  <div id="tela-pendente" class="tela-centralizada" style="display:none;">
+    <div class="cartao-login">
+      <h2>Acesso pendente de aprovação</h2>
+      <p class="descricao">Sua conta foi criada com sucesso, mas ainda precisa ser aprovada pelo administrador do sistema, que vai definir seu perfil (Coordenação de Curso ou Chefia do Departamento de Ensino). Procure o administrador responsável.</p>
+      <button id="btn-sair-pendente">Sair</button>
+    </div>
+  </div>
+
+  <!-- TELA PRINCIPAL DO APP -->
+  <div id="tela-app" style="display:none;">
+
+    <div class="cabecalho-app">
+      <div>
+        <h1>Controle Disciplinar Discente</h1>
+        <p class="subtitulo">IFMT Campus Lucas do Rio Verde — Resolução 113/2025 RTR-CONSUP/RTR/IFMT</p>
+      </div>
+      <div class="usuario-info">
+        <div>
+          <div class="nome" id="usuario-nome"></div>
+          <div class="papel" id="usuario-papel"></div>
+        </div>
+        <button id="btn-sair">Sair</button>
+      </div>
+    </div>
+
+    <div class="abas">
+      <button id="tab-lanc" class="aba-btn">Lançar ocorrência</button>
+      <button id="tab-painel" class="aba-btn">Painel por aluno</button>
+      <button id="tab-todos" class="aba-btn">Visão geral</button>
+    </div>
+
+    <!-- Aba: lançar ocorrência -->
+    <div id="view-lanc">
+      <form id="form-lancamento">
+        <div class="linha-form">
+          <div>
+            <label for="f-nome">Nome do discente</label>
+            <input type="text" id="f-nome" placeholder="Nome completo">
+          </div>
+          <div>
+            <label for="f-matricula">Matrícula</label>
+            <input type="text" id="f-matricula" placeholder="Ex.: 2024108210600x">
+          </div>
+        </div>
+        <div class="linha-form">
+          <div>
+            <label for="f-curso">Curso</label>
+            <select id="f-curso"></select>
+          </div>
+          <div>
+            <label for="f-data">Data da falta</label>
+            <input type="date" id="f-data">
+          </div>
+        </div>
+        <label for="f-inciso">Inciso do Art. 11 infringido</label>
+        <select id="f-inciso"></select>
+        <div id="f-nivel-preview"></div>
+        <label for="f-desc">Descrição objetiva da ocorrência</label>
+        <textarea id="f-desc" rows="3" placeholder="Descreva circunstâncias, envolvidos, relato de presentes..."></textarea>
+        <div class="linha-form">
+          <div>
+            <label for="f-menor">Menor de idade?</label>
+            <select id="f-menor">
+              <option value="nao">Não</option>
+              <option value="sim">Sim — notificar responsáveis (Art. 14, §4º)</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-primario">Registrar ocorrência</button>
+        <p class="msg" id="msg-salvo"></p>
+      </form>
+    </div>
+
+    <!-- Aba: painel por aluno -->
+    <div id="view-painel" style="display:none;">
+      <label for="p-select">Selecionar discente</label>
+      <select id="p-select"></select>
+      <div id="p-conteudo" style="margin-top:1.25rem;"></div>
+    </div>
+
+    <!-- Aba: visão geral -->
+    <div id="view-todos" style="display:none;">
+      <div id="todos-resumo" class="grid-4"></div>
+      <div id="todos-alertas"></div>
+      <table class="tabela">
+        <thead>
+          <tr><th>Discente</th><th>Curso</th><th>Ocorrências</th><th>Nível atual</th><th>Situação</th></tr>
+        </thead>
+        <tbody id="todos-tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/regras.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -16,8 +16,9 @@ function formatarData(iso) {
 // -------------------- Telas --------------------
 
 function mostrarTela(tela) {
+  const exibicao = { "tela-login": "flex", "tela-pendente": "flex", "tela-app": "block" };
   ["tela-login", "tela-pendente", "tela-app"].forEach((id) => {
-    el(id).style.display = id === tela ? "block" : "none";
+    el(id).style.display = id === tela ? exibicao[id] : "none";
   });
 }
 

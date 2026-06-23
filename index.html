@@ -94,46 +94,89 @@
 
     <!-- Aba: lançar ocorrência -->
     <div id="view-lanc">
-      <form id="form-lancamento">
+
+      <div class="sub-abas">
+        <button id="subtab-individual" class="subtab-btn active">Individual</button>
+        <button id="subtab-lote" class="subtab-btn">Em lote (planilha)</button>
+      </div>
+
+      <div id="sub-individual">
+        <form id="form-lancamento">
+          <div class="pei-card">
+            <div class="linha-form">
+              <div>
+                <label for="f-nome">Nome do discente</label>
+                <input type="text" id="f-nome" placeholder="Nome completo">
+              </div>
+              <div>
+                <label for="f-matricula">Matrícula</label>
+                <input type="text" id="f-matricula" placeholder="Ex.: 2024108210600x">
+              </div>
+            </div>
+            <div class="linha-form">
+              <div>
+                <label for="f-curso">Curso</label>
+                <select id="f-curso"></select>
+              </div>
+              <div>
+                <label for="f-data">Data da falta</label>
+                <input type="date" id="f-data">
+              </div>
+            </div>
+            <label for="f-inciso">Inciso do Art. 11 infringido</label>
+            <select id="f-inciso"></select>
+            <div id="f-nivel-preview"></div>
+            <label for="f-desc">Descrição objetiva da ocorrência</label>
+            <textarea id="f-desc" rows="3" placeholder="Descreva circunstâncias, envolvidos, relato de presentes..."></textarea>
+            <div class="linha-form">
+              <div>
+                <label for="f-menor">Menor de idade?</label>
+                <select id="f-menor">
+                  <option value="nao">Não</option>
+                  <option value="sim">Sim — notificar responsáveis (Art. 14, §4º)</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn-primario">Registrar ocorrência</button>
+            <p class="msg" id="msg-salvo"></p>
+          </div>
+        </form>
+      </div>
+
+      <div id="sub-lote" style="display:none;">
         <div class="pei-card">
-          <div class="linha-form">
-            <div>
-              <label for="f-nome">Nome do discente</label>
-              <input type="text" id="f-nome" placeholder="Nome completo">
-            </div>
-            <div>
-              <label for="f-matricula">Matrícula</label>
-              <input type="text" id="f-matricula" placeholder="Ex.: 2024108210600x">
-            </div>
-          </div>
-          <div class="linha-form">
-            <div>
-              <label for="f-curso">Curso</label>
-              <select id="f-curso"></select>
-            </div>
-            <div>
-              <label for="f-data">Data da falta</label>
-              <input type="date" id="f-data">
-            </div>
-          </div>
-          <label for="f-inciso">Inciso do Art. 11 infringido</label>
-          <select id="f-inciso"></select>
-          <div id="f-nivel-preview"></div>
-          <label for="f-desc">Descrição objetiva da ocorrência</label>
-          <textarea id="f-desc" rows="3" placeholder="Descreva circunstâncias, envolvidos, relato de presentes..."></textarea>
-          <div class="linha-form">
-            <div>
-              <label for="f-menor">Menor de idade?</label>
-              <select id="f-menor">
-                <option value="nao">Não</option>
-                <option value="sim">Sim — notificar responsáveis (Art. 14, §4º)</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="btn-primario">Registrar ocorrência</button>
-          <p class="msg" id="msg-salvo"></p>
+          <label>Planilha de lançamentos (.xlsx)</label>
+          <p class="muted" style="font-size:13px; margin-bottom:10px;">Use o modelo padrão com as abas "Lançamentos" e "Referência". Cada linha será validada antes de salvar.</p>
+          <input type="file" id="f-arquivo-lote" accept=".xlsx,.xls">
+          <p class="msg" id="msg-lote-arquivo"></p>
         </div>
-      </form>
+
+        <div id="lote-preview-wrap" style="display:none;">
+          <div class="pei-card">
+            <div class="linha-resumo">
+              <span><strong id="lote-total">0</strong> linhas lidas</span>
+              <span class="muted">|</span>
+              <span style="color:var(--cor-leve);"><strong id="lote-validas">0</strong> válidas</span>
+              <span class="muted">|</span>
+              <span style="color:var(--cor-gravissima);"><strong id="lote-invalidas">0</strong> com erro</span>
+            </div>
+          </div>
+          <div class="pei-card" style="overflow-x:auto;">
+            <table class="tabela" id="lote-tabela">
+              <thead>
+                <tr><th>#</th><th>Nome</th><th>Matrícula</th><th>Curso</th><th>Data</th><th>Inciso</th><th>Situação</th></tr>
+              </thead>
+              <tbody id="lote-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pei-card">
+            <p class="muted" style="font-size:13px; margin-bottom:12px;">Apenas as linhas válidas serão importadas. Corrija os erros na planilha e reenvie, se necessário.</p>
+            <button id="btn-confirmar-lote" class="btn-primario">Confirmar e importar linhas válidas</button>
+            <p class="msg" id="msg-lote-confirmacao"></p>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Aba: painel por aluno -->
@@ -168,10 +211,12 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/regras.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/dados.js"></script>
+<script src="js/importacao.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

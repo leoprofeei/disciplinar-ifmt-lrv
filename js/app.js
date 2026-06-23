@@ -89,6 +89,11 @@ async function iniciarAposLogin() {
   }
   el("usuario-nome").textContent = perfil.nome_completo;
   el("usuario-papel").textContent = perfil.papel === "coordenacao" ? "Coordenação de Curso" : perfil.papel === "chefia" ? "Chefia do Departamento de Ensino" : "Administrador";
+
+  const ehAdmin = perfil.papel === "admin";
+  el("subtab-lote").style.display = ehAdmin ? "inline-flex" : "none";
+  if (!ehAdmin) mostrarSubAba("individual");
+
   mostrarTela("tela-app");
   mostrarAba("lanc");
 }
@@ -255,11 +260,94 @@ async function renderizarVisaoGeral() {
     .join("");
 }
 
+// -------------------- Importação em lote --------------------
+
+function mostrarSubAba(sub) {
+  el("sub-individual").style.display = sub === "individual" ? "block" : "none";
+  el("sub-lote").style.display = sub === "lote" ? "block" : "none";
+  el("subtab-individual").classList.toggle("active", sub === "individual");
+  el("subtab-lote").classList.toggle("active", sub === "lote");
+}
+
+function renderizarPreviaLote(linhas) {
+  importacaoLinhas = linhas;
+  const validas = linhas.filter((l) => l.valido).length;
+  const invalidas = linhas.length - validas;
+
+  el("lote-total").textContent = linhas.length;
+  el("lote-validas").textContent = validas;
+  el("lote-invalidas").textContent = invalidas;
+  el("lote-preview-wrap").style.display = "block";
+
+  el("lote-tbody").innerHTML = linhas
+    .map((l, i) => {
+      const situacao = l.valido
+        ? `<span style="color:var(--cor-leve); font-weight:600;">OK</span>`
+        : `<span style="color:var(--cor-gravissima); font-weight:600;" title="${l.erros.join("; ")}">${l.erros.join("; ")}</span>`;
+      return `<tr style="${l.valido ? "" : "background:var(--cor-gravissima-fundo);"}">
+        <td>${i + 1}</td>
+        <td>${l.nome || "—"}</td>
+        <td>${l.matricula || "—"}</td>
+        <td>${l.curso || "—"}</td>
+        <td>${l.dataFalta ? formatarData(l.dataFalta) : "—"}</td>
+        <td>${l.inciso || "—"}</td>
+        <td style="font-size:12px;">${situacao}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+function configurarImportacaoLote() {
+  el("subtab-individual").addEventListener("click", () => mostrarSubAba("individual"));
+  el("subtab-lote").addEventListener("click", () => mostrarSubAba("lote"));
+
+  el("f-arquivo-lote").addEventListener("change", async (e) => {
+    const arquivo = e.target.files[0];
+    const msg = el("msg-lote-arquivo");
+    if (!arquivo) return;
+    msg.textContent = "Lendo planilha...";
+    msg.className = "msg";
+    try {
+      const linhas = await lerPlanilha(arquivo);
+      msg.textContent = `${linhas.length} linha(s) encontrada(s).`;
+      msg.className = "msg msg-sucesso";
+      renderizarPreviaLote(linhas);
+    } catch (err) {
+      msg.textContent = "Erro ao ler a planilha: " + err.message;
+      msg.className = "msg msg-erro";
+    }
+  });
+
+  el("btn-confirmar-lote").addEventListener("click", async () => {
+    const msg = el("msg-lote-confirmacao");
+    const validas = importacaoLinhas.filter((l) => l.valido);
+    if (!validas.length) {
+      msg.textContent = "Nenhuma linha válida para importar.";
+      msg.className = "msg msg-erro";
+      return;
+    }
+    msg.textContent = `Importando ${validas.length} ocorrência(s)...`;
+    msg.className = "msg";
+    const resultado = await importarLinhasValidas(importacaoLinhas);
+    if (resultado.erro) {
+      msg.textContent = "Não foi possível importar: " + resultado.erro;
+      msg.className = "msg msg-erro";
+      return;
+    }
+    msg.textContent = `Importação concluída: ${resultado.sucesso} salva(s), ${resultado.falha} com falha.`;
+    msg.className = "msg msg-sucesso";
+    el("f-arquivo-lote").value = "";
+    el("lote-preview-wrap").style.display = "none";
+    importacaoLinhas = [];
+  });
+}
+
 // -------------------- Inicialização --------------------
 
 document.addEventListener("DOMContentLoaded", async () => {
   configurarTelaLogin();
   configurarFormularioLancamento();
+  configurarImportacaoLote();
   preencherSelectCursos();
   preencherSelectIncisos();
   el("f-inciso").addEventListener("change", atualizarPreviewNivel);

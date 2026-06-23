@@ -305,6 +305,30 @@ button:hover { background: var(--fundo); }
   background: transparent;
 }
 
+/* ===== Sub-abas (Individual / Em lote) ===== */
+.sub-abas {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.subtab-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--bd);
+  background: #fff;
+  border-radius: 20px;
+  font-size: 14.3px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+}
+
+.subtab-btn.active {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: #fff;
+}
+
 /* ===== Cards estilo PEI ===== */
 .pei-card {
   background: #fff;

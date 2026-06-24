@@ -979,8 +979,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   el("btn-sair-pendente").addEventListener("click", sair);
   configurarFormularioDefinirSenha();
 
+  let fluxoRecuperacaoDetectado = detectarFluxoDefinirSenha();
+
+  // O evento PASSWORD_RECOVERY é disparado pela própria biblioteca do Supabase
+  // de forma confiável, independentemente do formato da URL (hash ou PKCE).
+  // Usamos isso como sinal definitivo, complementando a checagem manual da URL.
+  supabaseClient.auth.onAuthStateChange((event, sessao) => {
+    if (event === "PASSWORD_RECOVERY") {
+      fluxoRecuperacaoDetectado = true;
+      mostrarTela("tela-definir-senha");
+    }
+  });
+
+  // Pequena espera para dar tempo do evento PASSWORD_RECOVERY (se houver)
+  // disparar antes de decidirmos qual tela mostrar.
+  await new Promise((resolve) => setTimeout(resolve, 400));
+
   const { data: sessao } = await supabaseClient.auth.getSession();
-  if (sessao.session && detectarFluxoDefinirSenha()) {
+  if (sessao.session && (fluxoRecuperacaoDetectado || detectarFluxoDefinirSenha())) {
     mostrarTela("tela-definir-senha");
   } else if (sessao.session) {
     await iniciarAposLogin();

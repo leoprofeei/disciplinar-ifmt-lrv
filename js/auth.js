@@ -45,12 +45,20 @@ async function carregarPerfilAtual() {
 }
 
 function detectarFluxoDefinirSenha() {
-  // O Supabase coloca esses parâmetros na URL (após o #) quando o link
-  // é de recuperação de senha ou de convite de novo usuário.
+  // O Supabase pode entregar essa informação de duas formas, dependendo
+  // do fluxo configurado no projeto:
+  // 1) Fluxo implícito (mais antigo): parâmetros depois de # na URL
+  //    ex: #access_token=...&type=recovery
+  // 2) Fluxo PKCE (mais novo/padrão): query string com "type" e "code"
+  //    ex: ?type=recovery&code=...
   const hash = window.location.hash || "";
-  const params = new URLSearchParams(hash.replace(/^#/, ""));
-  const tipo = params.get("type");
-  return tipo === "recovery" || tipo === "invite";
+  const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+  const tipoHash = hashParams.get("type");
+
+  const queryParams = new URLSearchParams(window.location.search || "");
+  const tipoQuery = queryParams.get("type");
+
+  return tipoHash === "recovery" || tipoHash === "invite" || tipoQuery === "recovery" || tipoQuery === "invite";
 }
 
 async function definirNovaSenha(novaSenha) {

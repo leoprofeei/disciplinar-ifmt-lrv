@@ -760,6 +760,27 @@ function atualizarBadgeAdmin(qtdPendentes) {
   badgeEl.style.display = qtdPendentes > 0 ? "inline-flex" : "none";
 }
 
+function cardUsuarioHtml(u) {
+  return `<div class="card-usuario">
+    <div class="topo-usuario">
+      <div>
+        <p class="nome-usuario">${u.nome_completo}</p>
+        <p class="email-usuario">${u.email}</p>
+      </div>
+      <span class="papel-badge">${PAPEL_LABEL[u.papel] || u.papel}</span>
+    </div>
+    <div class="acoes-usuario">
+      <select class="select-papel-admin" data-userid="${u.id}">
+        <option value="">Alterar papel para...</option>
+        ${OPCOES_PAPEL.map((o) => `<option value="${o.valor}" ${o.valor === u.papel ? "selected" : ""}>${o.label}</option>`).join("")}
+      </select>
+      <button class="btn-aplicar-papel" data-userid="${u.id}">Aplicar</button>
+      <button class="btn-resetar-senha" data-email="${u.email}"><i class="ti ti-mail"></i> Recuperação</button>
+      <button class="btn-remover-usuario" data-userid="${u.id}" data-nome="${u.nome_completo}"><i class="ti ti-trash"></i> Remover</button>
+    </div>
+  </div>`;
+}
+
 async function renderizarAdministracao() {
   const msg = el("msg-admin");
   msg.textContent = "";
@@ -792,17 +813,7 @@ async function renderizarAdministracao() {
     return;
   }
 
-  el("admin-usuarios-tbody").innerHTML = todos
-    .map(
-      (u) => `<tr>
-      <td>${u.nome_completo}</td>
-      <td class="muted">${u.email}</td>
-      <td>${PAPEL_LABEL[u.papel] || u.papel}</td>
-      <td>${selectPapelHtml(u.id, u.papel)}</td>
-      <td><button class="acao-btn acao-editar btn-resetar-senha" data-email="${u.email}">Enviar recuperação</button></td>
-    </tr>`
-    )
-    .join("");
+  el("admin-usuarios-lista").innerHTML = todos.map(cardUsuarioHtml).join("");
 
   document.querySelectorAll(".btn-resetar-senha").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -841,6 +852,26 @@ async function renderizarAdministracao() {
         return;
       }
       msg.textContent = "Papel atualizado com sucesso.";
+      msg.className = "msg msg-sucesso";
+      await renderizarAdministracao();
+    });
+  });
+
+  document.querySelectorAll(".btn-remover-usuario").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const userId = btn.dataset.userid;
+      const nome = btn.dataset.nome;
+      const ok = confirm(`Remover definitivamente o usuário "${nome}"? Esta ação não pode ser desfeita — a pessoa perderá o acesso ao sistema imediatamente.`);
+      if (!ok) return;
+      msg.textContent = "Removendo...";
+      msg.className = "msg";
+      const { error } = await removerUsuario(userId);
+      if (error) {
+        msg.textContent = "Erro: " + error.message;
+        msg.className = "msg msg-erro";
+        return;
+      }
+      msg.textContent = `Usuário "${nome}" removido com sucesso.`;
       msg.className = "msg msg-sucesso";
       await renderizarAdministracao();
     });

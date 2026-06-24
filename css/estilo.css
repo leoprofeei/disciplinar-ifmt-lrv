@@ -282,9 +282,8 @@ button:hover { background: var(--fundo); }
   display: flex;
   overflow-x: auto;
   gap: 2px;
-  background: #fff;
-  border-bottom: 2px solid #1B6B4520;
-  padding: 0 8px;
+  background: var(--verde);
+  padding: 0 23px;
   margin-bottom: 1.5rem;
   border-radius: 0;
 }
@@ -292,22 +291,24 @@ button:hover { background: var(--fundo); }
 .aba-btn {
   display: flex;
   align-items: center;
-  padding: 17px 21px;
+  padding: 14px 18px;
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 17.6px;
-  color: #666;
-  font-weight: 600;
+  font-size: 14.3px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   white-space: nowrap;
-  border-bottom: 4px solid transparent;
+  border-bottom: 3px solid transparent;
   border-radius: 0;
   transition: all 0.15s;
 }
 
 .aba-btn.active {
-  color: var(--verde);
-  border-bottom-color: var(--verde);
+  color: #fff;
+  border-bottom-color: var(--verde4);
   background: transparent;
 }
 
@@ -329,25 +330,35 @@ button:hover { background: var(--fundo); }
 /* ===== Sub-abas (Individual / Em lote) ===== */
 .sub-abas {
   display: flex;
-  gap: 8px;
-  margin-bottom: 1rem;
+  overflow-x: auto;
+  gap: 2px;
+  background: var(--verde);
+  padding: 0 23px;
+  margin-bottom: 1.5rem;
 }
 
 .subtab-btn {
-  padding: 8px 16px;
-  border: 1px solid var(--bd);
-  background: #fff;
-  border-radius: 20px;
-  font-size: 14.3px;
-  font-weight: 600;
-  color: #666;
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  border: none;
+  background: transparent;
   cursor: pointer;
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  transition: all 0.15s;
 }
 
 .subtab-btn.active {
-  background: var(--verde);
-  border-color: var(--verde);
   color: #fff;
+  border-bottom-color: var(--verde4);
+  background: transparent;
 }
 
 /* ===== Modal de edição ===== */
@@ -429,6 +440,70 @@ button:hover { background: var(--fundo); }
   width: auto;
   display: inline-block;
 }
+
+/* ===== Cards de usuário (aba Administração) ===== */
+.lista-usuarios-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-usuario {
+  border: 1px solid var(--bd);
+  border-radius: var(--raio);
+  padding: 16px 18px;
+}
+
+.card-usuario .topo-usuario {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.card-usuario .nome-usuario {
+  font-weight: 700;
+  font-size: 15.6px;
+  margin: 0;
+}
+
+.card-usuario .email-usuario {
+  font-size: 14.3px;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.card-usuario .papel-badge {
+  background: var(--verde3);
+  color: var(--verde2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--raio);
+  white-space: nowrap;
+}
+
+.card-usuario .acoes-usuario {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  border-top: 1px solid var(--bd);
+  padding-top: 12px;
+}
+
+.card-usuario .acoes-usuario select {
+  flex: 1;
+  min-width: 180px;
+}
+
+.btn-remover-usuario {
+  color: var(--cor-gravissima);
+  border-color: var(--cor-gravissima-fundo);
+}
+.btn-remover-usuario:hover { background: var(--cor-gravissima-fundo); }
 
 /* ===== Cards estilo PEI ===== */
 .pei-card {

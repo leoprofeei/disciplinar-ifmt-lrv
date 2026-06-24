@@ -65,3 +65,10 @@ async function definirNovaSenha(novaSenha) {
   const { data, error } = await supabaseClient.auth.updateUser({ password: novaSenha });
   return { data, error };
 }
+
+async function enviarRecuperacaoSenha(email) {
+  const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  return { data, error };
+}

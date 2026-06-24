@@ -72,10 +72,39 @@ function configurarTelaLogin() {
   el("btn-mostrar-cadastro").addEventListener("click", () => {
     el("bloco-login").style.display = "none";
     el("bloco-cadastro").style.display = "block";
+    el("bloco-esqueci").style.display = "none";
   });
   el("btn-mostrar-login").addEventListener("click", () => {
     el("bloco-cadastro").style.display = "none";
+    el("bloco-esqueci").style.display = "none";
     el("bloco-login").style.display = "block";
+  });
+  el("btn-mostrar-login-2").addEventListener("click", () => {
+    el("bloco-cadastro").style.display = "none";
+    el("bloco-esqueci").style.display = "none";
+    el("bloco-login").style.display = "block";
+  });
+  el("btn-mostrar-esqueci").addEventListener("click", () => {
+    el("bloco-login").style.display = "none";
+    el("bloco-cadastro").style.display = "none";
+    el("bloco-esqueci").style.display = "block";
+  });
+
+  el("form-esqueci").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = el("esqueci-email").value.trim();
+    const msg = el("esqueci-msg");
+    msg.textContent = "Enviando...";
+    msg.className = "msg";
+    const { error } = await enviarRecuperacaoSenha(email);
+    if (error) {
+      msg.textContent = "Erro: " + error.message;
+      msg.className = "msg msg-erro";
+      return;
+    }
+    msg.textContent = "Se este e-mail estiver cadastrado, você receberá um link para definir uma nova senha em poucos minutos.";
+    msg.className = "msg msg-sucesso";
+    el("form-esqueci").reset();
   });
 }
 
@@ -770,9 +799,28 @@ async function renderizarAdministracao() {
       <td class="muted">${u.email}</td>
       <td>${PAPEL_LABEL[u.papel] || u.papel}</td>
       <td>${selectPapelHtml(u.id, u.papel)}</td>
+      <td><button class="acao-btn acao-editar btn-resetar-senha" data-email="${u.email}">Enviar recuperação</button></td>
     </tr>`
     )
     .join("");
+
+  document.querySelectorAll(".btn-resetar-senha").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const email = btn.dataset.email;
+      const ok = confirm(`Enviar e-mail de recuperação de senha para ${email}?`);
+      if (!ok) return;
+      msg.textContent = "Enviando...";
+      msg.className = "msg";
+      const { error } = await enviarRecuperacaoSenha(email);
+      if (error) {
+        msg.textContent = "Erro: " + error.message;
+        msg.className = "msg msg-erro";
+        return;
+      }
+      msg.textContent = `E-mail de recuperação enviado para ${email}.`;
+      msg.className = "msg msg-sucesso";
+    });
+  });
 
   document.querySelectorAll(".btn-aplicar-papel").forEach((btn) => {
     btn.addEventListener("click", async () => {

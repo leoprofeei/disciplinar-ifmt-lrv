@@ -25,7 +25,11 @@
         <button type="submit" class="btn-primario">Entrar</button>
         <p class="msg" id="login-msg"></p>
       </form>
-      <p class="rodape-login">Não tem conta? <button class="btn-link" id="btn-mostrar-cadastro">Cadastre-se</button></p>
+      <p class="rodape-login">
+        <button class="btn-link" id="btn-mostrar-esqueci">Esqueci minha senha</button>
+        &nbsp;·&nbsp;
+        Não tem conta? <button class="btn-link" id="btn-mostrar-cadastro">Cadastre-se</button>
+      </p>
     </div>
 
     <div id="bloco-cadastro" style="display:none;">
@@ -42,6 +46,18 @@
         <p class="msg" id="cadastro-msg"></p>
       </form>
       <p class="rodape-login">Já tem conta? <button class="btn-link" id="btn-mostrar-login">Entrar</button></p>
+    </div>
+
+    <div id="bloco-esqueci" style="display:none;">
+      <h2>Recuperar acesso</h2>
+      <p class="descricao">Digite seu e-mail institucional. Vamos enviar um link para você definir uma nova senha.</p>
+      <form id="form-esqueci">
+        <label for="esqueci-email">E-mail institucional</label>
+        <input type="email" id="esqueci-email" required>
+        <button type="submit" class="btn-primario">Enviar link de recuperação</button>
+        <p class="msg" id="esqueci-msg"></p>
+      </form>
+      <p class="rodape-login">Lembrou a senha? <button class="btn-link" id="btn-mostrar-login-2">Entrar</button></p>
     </div>
 
   </div>
@@ -267,7 +283,7 @@
       <div class="pei-card">
         <div class="pei-card-title">Todos os usuários</div>
         <table class="tabela">
-          <thead><tr><th>Nome</th><th>E-mail</th><th>Papel atual</th><th>Alterar para</th></tr></thead>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Papel atual</th><th>Alterar para</th><th>Senha</th></tr></thead>
           <tbody id="admin-usuarios-tbody"></tbody>
         </table>
       </div>

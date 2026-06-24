@@ -88,9 +88,9 @@
 
     <div class="abas">
       <button id="tab-lanc" class="aba-btn">Lançar ocorrência</button>
-      <button id="tab-painel" class="aba-btn">Painel por discente</button>
+      <button id="tab-painel" class="aba-btn">Painel por discente <span id="badge-painel" class="aba-badge" style="display:none;"></span></button>
       <button id="tab-todos" class="aba-btn">Visão geral</button>
-      <button id="tab-admin" class="aba-btn" style="display:none;">Administração</button>
+      <button id="tab-admin" class="aba-btn" style="display:none;">Administração <span id="badge-admin" class="aba-badge" style="display:none;"></span></button>
     </div>
 
     <!-- Aba: lançar ocorrência -->
@@ -241,18 +241,10 @@
       <div id="modal-notificacao" class="modal-overlay" style="display:none;">
         <div class="modal-card" style="max-width:680px;">
           <h3>Gerar notificação de medida disciplinar</h3>
-          <p class="muted" style="font-size:13px; margin-bottom:14px;">Revise e ajuste o texto sugerido antes de baixar o documento. O número da notificação deve ser preenchido manualmente.</p>
+          <p class="muted" style="font-size:13px; margin-bottom:14px;">Revise e ajuste o texto sugerido. O número e o cabeçalho da notificação serão gerados automaticamente no SUAP a partir deste documento.</p>
 
-          <div class="linha-form">
-            <div>
-              <label for="not-numero">Número da notificação</label>
-              <input type="text" id="not-numero" placeholder="Ex.: 55/2026 - LRV-ENS/LRV-DG/CLRV/RTR/IFMT">
-            </div>
-            <div>
-              <label for="not-data">Data do documento</label>
-              <input type="date" id="not-data">
-            </div>
-          </div>
+          <label for="not-data">Data do documento</label>
+          <input type="date" id="not-data" style="max-width:220px;">
 
           <label for="not-texto-principal">Texto da notificação</label>
           <textarea id="not-texto-principal" rows="5"></textarea>
@@ -279,8 +271,49 @@
 
           <div class="linha-resumo" style="margin-top:16px;">
             <button id="btn-cancelar-notificacao">Cancelar</button>
-            <button id="btn-baixar-notificacao" class="btn-primario" style="margin-top:0;">Baixar notificação (.doc)</button>
+            <button id="btn-ver-previa-notificacao" class="btn-primario" style="margin-top:0;">Visualizar prévia</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Modal de prévia da notificação -->
+      <div id="modal-previa-notificacao" class="modal-overlay" style="display:none;">
+        <div class="modal-card" style="max-width:680px;">
+          <h3>Prévia da notificação</h3>
+          <div id="previa-documento" class="previa-documento"></div>
+          <div class="linha-resumo" style="margin-top:16px; flex-wrap:wrap;">
+            <button id="btn-voltar-editar-notificacao">Voltar e editar</button>
+            <button id="btn-imprimir-notificacao">🖶 Imprimir</button>
+            <button id="btn-copiar-notificacao">Copiar texto</button>
+            <button id="btn-baixar-notificacao" class="btn-primario" style="margin-top:0;">Baixar .docx</button>
+          </div>
+          <p class="msg" id="msg-previa-notificacao"></p>
+        </div>
+      </div>
+
+      <!-- Modal de resolução de alerta -->
+      <div id="modal-alerta" class="modal-overlay" style="display:none;">
+        <div class="modal-card">
+          <h3>Registrar resolução do alerta</h3>
+          <p class="muted" id="alerta-descricao" style="font-size:13px; margin-bottom:14px;"></p>
+          <input type="hidden" id="alerta-matricula">
+          <input type="hidden" id="alerta-nome">
+          <input type="hidden" id="alerta-tipo">
+
+          <label for="alerta-acao">Ação tomada</label>
+          <select id="alerta-acao"></select>
+
+          <label for="alerta-data">Data da ação</label>
+          <input type="date" id="alerta-data">
+
+          <label for="alerta-obs">Observação (opcional)</label>
+          <textarea id="alerta-obs" rows="3" placeholder="Detalhes adicionais sobre a providência..."></textarea>
+
+          <div class="linha-resumo" style="margin-top:16px;">
+            <button id="btn-cancelar-alerta">Cancelar</button>
+            <button id="btn-confirmar-alerta" class="btn-primario" style="margin-top:0;">Confirmar resolução</button>
+          </div>
+          <p class="msg" id="msg-alerta"></p>
         </div>
       </div>
 
@@ -324,6 +357,13 @@
     <!-- Aba: administração (somente admin) -->
     <div id="view-admin" style="display:none;">
       <div class="pei-card">
+        <div class="linha-resumo" style="justify-content:space-between;">
+          <div class="pei-card-title" style="margin:0;">Usuários</div>
+          <button id="btn-abrir-convite" class="btn-primario" style="margin-top:0; width:auto;">+ Convidar usuário</button>
+        </div>
+      </div>
+
+      <div class="pei-card">
         <div class="pei-card-title">Usuários pendentes de aprovação</div>
         <table class="tabela">
           <thead><tr><th>Nome</th><th>E-mail</th><th>Cadastrado em</th><th>Aprovar como</th></tr></thead>
@@ -340,6 +380,33 @@
         </table>
       </div>
       <p class="msg" id="msg-admin"></p>
+    </div>
+
+    <!-- Modal de convite de usuário -->
+    <div id="modal-convite" class="modal-overlay" style="display:none;">
+      <div class="modal-card">
+        <h3>Convidar novo usuário</h3>
+        <p class="muted" style="font-size:13px; margin-bottom:14px;">A pessoa receberá um e-mail para definir a senha e acessar o sistema.</p>
+
+        <label for="convite-nome">Nome completo</label>
+        <input type="text" id="convite-nome" placeholder="Nome da pessoa">
+
+        <label for="convite-email">E-mail institucional</label>
+        <input type="email" id="convite-email" placeholder="nome@ifmt.edu.br">
+
+        <label for="convite-papel">Papel</label>
+        <select id="convite-papel">
+          <option value="coordenacao">Coordenação de Curso</option>
+          <option value="chefia">Chefia do Departamento de Ensino</option>
+          <option value="admin">Administrador</option>
+        </select>
+
+        <div class="linha-resumo" style="margin-top:16px;">
+          <button id="btn-cancelar-convite">Cancelar</button>
+          <button id="btn-enviar-convite" class="btn-primario" style="margin-top:0;">Enviar convite por e-mail</button>
+        </div>
+        <p class="msg" id="msg-convite"></p>
+      </div>
     </div>
 
     <div class="rodape-app">

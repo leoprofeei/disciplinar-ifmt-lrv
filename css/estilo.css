@@ -58,7 +58,7 @@ body {
 
 .topbar .marca {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 21px;
   padding: 13px 0;
 }
@@ -67,6 +67,7 @@ body {
   height: 75px;
   width: auto;
   flex-shrink: 0;
+  margin-bottom: 2px;
 }
 
 .topbar .titulo-sistema {
@@ -310,6 +311,21 @@ button:hover { background: var(--fundo); }
   background: transparent;
 }
 
+.aba-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--cor-gravissima-fundo);
+  color: var(--cor-gravissima);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
 /* ===== Sub-abas (Individual / Em lote) ===== */
 .sub-abas {
   display: flex;
@@ -384,6 +400,30 @@ button:hover { background: var(--fundo); }
   text-decoration: underline;
 }
 .link-discente:hover { color: var(--verde); }
+
+.previa-documento {
+  background: #fff;
+  border: 1px solid var(--bd);
+  border-radius: var(--raio);
+  padding: 28px 32px;
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 13.5px;
+  color: #111;
+  line-height: 1.6;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.previa-documento h4 {
+  text-align: center;
+  font-size: 14.5px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.previa-documento p { margin: 0 0 12px; }
+.previa-documento .campo-label { font-weight: 700; }
+.previa-documento .rodape-italico { font-style: italic; margin-top: 16px; }
 
 .select-papel-admin {
   width: auto;

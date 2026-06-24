@@ -82,3 +82,34 @@ function agruparPorDiscente(ocorrencias) {
   });
   return [...mapa.values()];
 }
+
+async function listarAlertasResolvidos() {
+  const { data, error } = await supabaseClient
+    .from("alertas_resolvidos")
+    .select("*")
+    .order("criado_em", { ascending: false });
+  return { data: data || [], error };
+}
+
+async function registrarResolucaoAlerta({ matricula, nomeDiscente, tipoAlerta, acaoTomada, dataAcao, observacao }) {
+  const { data, error } = await supabaseClient
+    .from("alertas_resolvidos")
+    .insert({
+      matricula,
+      nome_discente: nomeDiscente,
+      tipo_alerta: tipoAlerta,
+      acao_tomada: acaoTomada,
+      data_acao: dataAcao,
+      observacao: observacao || null,
+      registrado_por: usuarioAtual.id,
+      registrado_por_nome: usuarioAtual.nome_completo
+    })
+    .select();
+  return { data, error };
+}
+
+function alertaJaResolvidoRecente(matricula, totalOcorrenciasAtual, resolucoes) {
+  const doDiscente = resolucoes.filter((r) => r.matricula === matricula);
+  if (!doDiscente.length) return null;
+  return doDiscente.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
+}

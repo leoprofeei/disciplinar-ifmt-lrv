@@ -96,6 +96,16 @@ async function iniciarAposLogin() {
   el("subtab-lote").style.display = ehAdmin ? "inline-flex" : "none";
   el("tab-admin").style.display = ehAdmin ? "flex" : "none";
   if (!ehAdmin) mostrarSubAba("individual");
+  if (ehAdmin) {
+    const { data: pendentes } = await listarUsuariosPendentes();
+    atualizarBadgeAdmin(pendentes.length);
+  }
+
+  const { data: todasOc } = await listarTodasOcorrencias();
+  cacheGruposDiscentes = agruparPorDiscente(todasOc);
+  const { data: resolucoes } = await listarAlertasResolvidos();
+  cacheResolucoesAlertas = resolucoes;
+  atualizarBadgePainel();
 
   mostrarTela("tela-app");
   mostrarAba("lanc");
@@ -309,13 +319,39 @@ function configurarModalEdicao() {
 // -------------------- Painel por aluno --------------------
 
 let cacheGruposDiscentes = [];
+let cacheResolucoesAlertas = [];
 
 async function preencherSelectAlunos() {
   const { data } = await listarTodasOcorrencias();
   cacheGruposDiscentes = agruparPorDiscente(data);
+  const { data: resolucoes } = await listarAlertasResolvidos();
+  cacheResolucoesAlertas = resolucoes;
   renderizarOpcoesDiscentes(cacheGruposDiscentes);
+  atualizarBadgePainel();
   if (cacheGruposDiscentes.length) renderizarPainelAluno(cacheGruposDiscentes[0].matricula);
   el("p-select").onchange = (e) => renderizarPainelAluno(e.target.value);
+}
+
+function alertaEstaResolvido(matricula, ultimaOcorrenciaData) {
+  const resolucao = cacheResolucoesAlertas.find((r) => r.matricula === matricula);
+  if (!resolucao) return false;
+  return new Date(resolucao.data_acao) >= new Date(ultimaOcorrenciaData);
+}
+
+function gruposEmAlertaNaoResolvido() {
+  return cacheGruposDiscentes.filter((g) => {
+    const sit = calcularSituacao(g.ocorrencias);
+    if (!sit.alerta) return false;
+    const ultimaData = g.ocorrencias.slice().sort((a, b) => (a.data_falta > b.data_falta ? -1 : 1))[0].data_falta;
+    return !alertaEstaResolvido(g.matricula, ultimaData);
+  });
+}
+
+function atualizarBadgePainel() {
+  const qtd = gruposEmAlertaNaoResolvido().length;
+  const badgeEl = el("badge-painel");
+  badgeEl.textContent = qtd;
+  badgeEl.style.display = qtd > 0 ? "inline-flex" : "none";
 }
 
 function renderizarOpcoesDiscentes(grupos) {
@@ -331,6 +367,7 @@ function abrirPainelParaMatricula(matricula) {
 }
 
 let cacheListaPainelAtual = [];
+let alertaAtualPainel = null;
 
 async function renderizarPainelAluno(matricula) {
   const { data: lista } = await listarOcorrenciasPorMatricula(matricula);
@@ -341,6 +378,9 @@ async function renderizarPainelAluno(matricula) {
     return;
   }
   const sit = calcularSituacao(lista);
+  const ultimaData = lista.slice().sort((a, b) => (a.data_falta > b.data_falta ? -1 : 1))[0].data_falta;
+  const resolvido = sit.alerta ? alertaEstaResolvido(matricula, ultimaData) : false;
+  alertaAtualPainel = sit.alerta && !resolvido ? { matricula, nome: lista[0].nome_discente, tipo: sit.alerta.tipo, msg: sit.alerta.msg } : null;
 
   let html = `<div class="grid-4">`;
   ["leve", "media", "grave", "gravissima"].forEach((k) => {
@@ -355,13 +395,23 @@ async function renderizarPainelAluno(matricula) {
     <span class="muted" style="margin-left:auto;">Total: ${lista.length} ocorrência(s)</span>
   </div>`;
 
-  if (sit.alerta) {
+  if (sit.alerta && !resolvido) {
     const classe = sit.alerta.tipo.includes("gravissima") || sit.alerta.tipo.includes("grave_para") ? "alerta-critico" : "alerta-atencao";
-    html += `<div class="caixa-alerta ${classe}"><i class="ti ti-alert-triangle"></i><span>${sit.alerta.msg}</span></div>`;
+    html += `<div class="caixa-alerta ${classe}">
+      <i class="ti ti-alert-triangle"></i>
+      <span style="flex:1;">${sit.alerta.msg}</span>
+      <button id="btn-resolver-alerta" style="flex-shrink:0;">Registrar resolução</button>
+    </div>`;
+  } else if (sit.alerta && resolvido) {
+    const resolucao = cacheResolucoesAlertas.find((r) => r.matricula === matricula);
+    html += `<div class="caixa-alerta alerta-atencao" style="opacity:0.75;">
+      <i class="ti ti-check"></i>
+      <span>Alerta tratado em ${formatarData(resolucao.data_acao)}: ${resolucao.acao_tomada}${resolucao.observacao ? " — " + resolucao.observacao : ""}</span>
+    </div>`;
   }
 
   html += `<div class="linha-resumo" style="justify-content:flex-end; gap:10px;">
-    <button id="btn-imprimir-painel">🖶 Imprimir ocorrências</button>
+    <button id="btn-imprimir-painel">🖶 Ficha individual discente</button>
   </div>`;
 
   html += `<table class="tabela"><thead><tr>
@@ -384,6 +434,8 @@ async function renderizarPainelAluno(matricula) {
   cont.querySelectorAll(".btn-gerar-notificacao").forEach((btn) => {
     btn.addEventListener("click", () => abrirModalNotificacao(btn.dataset.id, lista));
   });
+  const btnResolver = el("btn-resolver-alerta");
+  if (btnResolver) btnResolver.addEventListener("click", () => abrirModalAlerta(alertaAtualPainel));
 }
 
 function imprimirOcorrenciasDiscente(lista, sit) {
@@ -400,7 +452,7 @@ function imprimirOcorrenciasDiscente(lista, sit) {
     )
     .join("");
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Histórico Disciplinar — ${primeira.nome_discente}</title>
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ficha Individual do Discente — ${primeira.nome_discente}</title>
   <style>
     body { font-family: Arial, sans-serif; color:#222; padding: 30px; }
     h1 { font-size: 18px; margin-bottom: 4px; }
@@ -413,7 +465,7 @@ function imprimirOcorrenciasDiscente(lista, sit) {
   </style>
   </head><body>
     <h1>IFMT — Campus Lucas do Rio Verde</h1>
-    <div class="sub">Histórico de ocorrências disciplinares — Resolução 113/2025 RTR-CONSUP/RTR/IFMT</div>
+    <div class="sub">Ficha Individual do Discente — Resolução 113/2025 RTR-CONSUP/RTR/IFMT</div>
     <div class="resumo">
       <strong>Discente:</strong> ${primeira.nome_discente}<br>
       <strong>Matrícula:</strong> ${primeira.matricula}<br>
@@ -607,6 +659,56 @@ function configurarImportacaoLote() {
   });
 }
 
+// -------------------- Convite de usuário --------------------
+
+function abrirModalConvite() {
+  el("convite-nome").value = "";
+  el("convite-email").value = "";
+  el("convite-papel").value = "coordenacao";
+  el("msg-convite").textContent = "";
+  el("modal-convite").style.display = "flex";
+}
+
+function fecharModalConvite() {
+  el("modal-convite").style.display = "none";
+}
+
+function configurarModalConvite() {
+  el("btn-abrir-convite").addEventListener("click", abrirModalConvite);
+  el("btn-cancelar-convite").addEventListener("click", fecharModalConvite);
+  el("modal-convite").addEventListener("click", (e) => {
+    if (e.target.id === "modal-convite") fecharModalConvite();
+  });
+
+  el("btn-enviar-convite").addEventListener("click", async () => {
+    const msg = el("msg-convite");
+    const nomeCompleto = el("convite-nome").value.trim();
+    const email = el("convite-email").value.trim();
+    const papel = el("convite-papel").value;
+
+    if (!nomeCompleto || !email) {
+      msg.textContent = "Preencha nome e e-mail.";
+      msg.className = "msg msg-erro";
+      return;
+    }
+
+    msg.textContent = "Enviando convite...";
+    msg.className = "msg";
+
+    const { error } = await convidarUsuario({ nomeCompleto, email, papel });
+    if (error) {
+      msg.textContent = "Erro: " + error.message;
+      msg.className = "msg msg-erro";
+      return;
+    }
+
+    msg.textContent = "Convite enviado com sucesso para " + email + ".";
+    msg.className = "msg msg-sucesso";
+    await renderizarAdministracao();
+    setTimeout(fecharModalConvite, 1500);
+  });
+}
+
 // -------------------- Administração (apenas admin) --------------------
 
 const OPCOES_PAPEL = [
@@ -621,6 +723,12 @@ function selectPapelHtml(userId, papelAtual) {
     ${OPCOES_PAPEL.map((o) => `<option value="${o.valor}" ${o.valor === papelAtual ? "selected" : ""}>${o.label}</option>`).join("")}
   </select>
   <button class="acao-btn acao-editar btn-aplicar-papel" data-userid="${userId}">Aplicar</button>`;
+}
+
+function atualizarBadgeAdmin(qtdPendentes) {
+  const badgeEl = el("badge-admin");
+  badgeEl.textContent = qtdPendentes;
+  badgeEl.style.display = qtdPendentes > 0 ? "inline-flex" : "none";
 }
 
 async function renderizarAdministracao() {
@@ -645,6 +753,8 @@ async function renderizarAdministracao() {
     </tr>`
     )
     .join("");
+
+  atualizarBadgeAdmin(pendentes.length);
 
   const { data: todos, error: erroTodos } = await listarTodosUsuarios();
   if (erroTodos) {
@@ -689,6 +799,68 @@ async function renderizarAdministracao() {
   });
 }
 
+// -------------------- Resolução de alertas --------------------
+
+function abrirModalAlerta(alerta) {
+  if (!alerta) return;
+  el("alerta-matricula").value = alerta.matricula;
+  el("alerta-nome").value = alerta.nome;
+  el("alerta-tipo").value = alerta.tipo;
+  el("alerta-descricao").textContent = `${alerta.nome} — ${alerta.msg}`;
+
+  const opcoes = ACOES_SUGERIDAS_ALERTA[alerta.tipo] || ["Providência registrada"];
+  el("alerta-acao").innerHTML = opcoes.map((o) => `<option value="${o}">${o}</option>`).join("");
+  el("alerta-data").value = new Date().toISOString().slice(0, 10);
+  el("alerta-obs").value = "";
+  el("msg-alerta").textContent = "";
+
+  el("modal-alerta").style.display = "flex";
+}
+
+function fecharModalAlerta() {
+  el("modal-alerta").style.display = "none";
+}
+
+function configurarModalAlerta() {
+  el("btn-cancelar-alerta").addEventListener("click", fecharModalAlerta);
+  el("modal-alerta").addEventListener("click", (e) => {
+    if (e.target.id === "modal-alerta") fecharModalAlerta();
+  });
+
+  el("btn-confirmar-alerta").addEventListener("click", async () => {
+    const msg = el("msg-alerta");
+    const dataAcao = el("alerta-data").value;
+    if (!dataAcao) {
+      msg.textContent = "Informe a data da ação.";
+      msg.className = "msg msg-erro";
+      return;
+    }
+    msg.textContent = "Salvando...";
+    msg.className = "msg";
+
+    const { error } = await registrarResolucaoAlerta({
+      matricula: el("alerta-matricula").value,
+      nomeDiscente: el("alerta-nome").value,
+      tipoAlerta: el("alerta-tipo").value,
+      acaoTomada: el("alerta-acao").value,
+      dataAcao,
+      observacao: el("alerta-obs").value.trim()
+    });
+
+    if (error) {
+      msg.textContent = "Erro: " + error.message;
+      msg.className = "msg msg-erro";
+      return;
+    }
+
+    fecharModalAlerta();
+    const { data: resolucoes } = await listarAlertasResolvidos();
+    cacheResolucoesAlertas = resolucoes;
+    atualizarBadgePainel();
+    renderizarPainelAluno(el("alerta-matricula").value);
+  });
+}
+
 // -------------------- Notificação de medida disciplinar --------------------
 
 function abrirModalNotificacao(id, listaOcorrencias) {
@@ -697,7 +869,6 @@ function abrirModalNotificacao(id, listaOcorrencias) {
   ocorrenciaParaNotificar = o;
 
   const sugestao = sugerirTextoNotificacao(o);
-  el("not-numero").value = "";
   el("not-data").value = new Date().toISOString().slice(0, 10);
   el("not-texto-principal").value = sugestao.textoPrincipal;
   el("not-fundamentacao").value = sugestao.fundamentacao;
@@ -713,30 +884,65 @@ function fecharModalNotificacao() {
   el("modal-notificacao").style.display = "none";
 }
 
+function coletarDadosNotificacaoForm() {
+  return {
+    dataFormatadaExtenso: dataExtenso(el("not-data").value),
+    textoPrincipal: el("not-texto-principal").value.trim(),
+    fundamentacao: el("not-fundamentacao").value.trim(),
+    considerandos: el("not-considerandos").value.trim(),
+    tipoFalta: el("not-tipo-falta").value.trim(),
+    medida: el("not-medida").value.trim(),
+    rodape: el("not-rodape").value.trim()
+  };
+}
+
+function abrirPreviaNotificacao() {
+  if (!ocorrenciaParaNotificar) return;
+  const dados = coletarDadosNotificacaoForm();
+  renderizarPreviaNotificacao(dados);
+  el("msg-previa-notificacao").textContent = "";
+  el("modal-notificacao").style.display = "none";
+  el("modal-previa-notificacao").style.display = "flex";
+}
+
+function fecharPreviaNotificacao() {
+  el("modal-previa-notificacao").style.display = "none";
+}
+
 function configurarModalNotificacao() {
   el("btn-cancelar-notificacao").addEventListener("click", fecharModalNotificacao);
   el("modal-notificacao").addEventListener("click", (e) => {
     if (e.target.id === "modal-notificacao") fecharModalNotificacao();
   });
 
+  el("btn-ver-previa-notificacao").addEventListener("click", abrirPreviaNotificacao);
+
+  el("btn-voltar-editar-notificacao").addEventListener("click", () => {
+    el("modal-previa-notificacao").style.display = "none";
+    el("modal-notificacao").style.display = "flex";
+  });
+
+  el("modal-previa-notificacao").addEventListener("click", (e) => {
+    if (e.target.id === "modal-previa-notificacao") fecharPreviaNotificacao();
+  });
+
+  el("btn-imprimir-notificacao").addEventListener("click", imprimirPreviaNotificacao);
+
+  el("btn-copiar-notificacao").addEventListener("click", async () => {
+    const dados = coletarDadosNotificacaoForm();
+    const ok = await copiarTextoNotificacao(dados);
+    const msg = el("msg-previa-notificacao");
+    msg.textContent = ok ? "Texto copiado para a área de transferência." : "Não foi possível copiar automaticamente. Selecione e copie manualmente.";
+    msg.className = ok ? "msg msg-sucesso" : "msg msg-erro";
+  });
+
   el("btn-baixar-notificacao").addEventListener("click", () => {
     if (!ocorrenciaParaNotificar) return;
     const o = ocorrenciaParaNotificar;
-    const dataDoc = el("not-data").value;
-
-    const html = gerarHtmlNotificacao({
-      numero: el("not-numero").value.trim() || "____/" + new Date().getFullYear(),
-      dataFormatadaExtenso: dataExtenso(dataDoc),
-      textoPrincipal: el("not-texto-principal").value.trim(),
-      fundamentacao: el("not-fundamentacao").value.trim(),
-      considerandos: el("not-considerandos").value.trim(),
-      tipoFalta: el("not-tipo-falta").value.trim(),
-      medida: el("not-medida").value.trim(),
-      rodape: el("not-rodape").value.trim()
-    });
-
+    const dados = coletarDadosNotificacaoForm();
+    const html = gerarHtmlNotificacaoCompleto(dados);
     downloadComoDoc(`Notificacao_${o.nome_discente}_${formatarData(o.data_falta).replace(/\//g, "-")}`, html);
-    fecharModalNotificacao();
+    fecharPreviaNotificacao();
   });
 }
 
@@ -748,6 +954,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   configurarImportacaoLote();
   configurarModalEdicao();
   configurarModalNotificacao();
+  configurarModalAlerta();
+  configurarModalConvite();
   preencherDatalistCursos();
   preencherDatalistIncisos();
   configurarBuscaInciso("f-inciso-busca", "f-inciso", true);

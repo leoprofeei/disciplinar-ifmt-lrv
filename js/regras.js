@@ -122,3 +122,10 @@ function calcularSituacao(lista) {
   }
   return { porNivel, nivelAtual, alerta };
 }
+
+const ACOES_SUGERIDAS_ALERTA = {
+  leve_para_media: ["Advertência verbal reforçada", "Orientação registrada com responsáveis", "Outra providência"],
+  media_para_grave: ["Advertência escrita aplicada", "Atividade pedagógica extracurricular aplicada", "Outra providência"],
+  grave_para_gravissima: ["Processo Disciplinar Discente (PDD) instaurado via Comissão", "Suspensão/cancelamento de benefício aplicado", "Outra providência"],
+  gravissima_direta: ["Encaminhado à Direção-Geral para instauração de PDD", "Medida disciplinar aplicada", "Outra providência"]
+};

@@ -26,3 +26,26 @@ const PAPEL_LABEL = {
   chefia: "Chefia do Departamento de Ensino",
   admin: "Administrador"
 };
+
+async function convidarUsuario({ nomeCompleto, email, papel }) {
+  const { data: sessao } = await supabaseClient.auth.getSession();
+  const token = sessao.session ? sessao.session.access_token : "";
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/convidar-usuario`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ nome_completo: nomeCompleto, email, papel })
+    });
+    const resultado = await resp.json();
+    if (!resp.ok) {
+      return { data: null, error: { message: resultado.error || "Não foi possível enviar o convite." } };
+    }
+    return { data: resultado, error: null };
+  } catch (e) {
+    return { data: null, error: { message: "Erro de conexão ao enviar convite: " + e.message } };
+  }
+}

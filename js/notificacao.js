@@ -1,6 +1,7 @@
 // ============================================================
 // NOTIFICAÇÃO — geração de documento de medida disciplinar (.doc)
-// Modelo único baseado nas notificações padrão do Campus LRV
+// Modelo único, sem cabeçalho institucional (numeração e cabeçalho
+// completo são gerados automaticamente pelo SUAP a partir deste texto)
 // ============================================================
 
 let ocorrenciaParaNotificar = null;
@@ -32,57 +33,57 @@ function sugerirTextoNotificacao(o) {
   };
 }
 
-function gerarHtmlNotificacao(dados) {
-  const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const nl = (s) => esc(s).replace(/\n/g, "<br>");
+function corpoNotificacaoHtml(dados, esc, nl) {
+  return `
+  <h4>NOTIFICAÇÃO DE APLICAÇÃO DE MEDIDA DISCIPLINAR</h4>
+  <p>${nl(dados.textoPrincipal)}</p>
+  <p>${nl(dados.fundamentacao)}</p>
+  ${dados.considerandos ? `<p>${nl(dados.considerandos)}</p>` : ""}
+  <p><span class="campo-label">Tipo de falta disciplinar:</span> ${esc(dados.tipoFalta)}.<br>
+  <span class="campo-label">Medida disciplinar:</span> ${esc(dados.medida)}</p>
+  <p class="rodape-italico">${nl(dados.rodape)}</p>`;
+}
 
+function escHtml(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function nlHtml(s) {
+  return escHtml(s).replace(/\n/g, "<br>");
+}
+
+function renderizarPreviaNotificacao(dados) {
+  el("previa-documento").innerHTML = corpoNotificacaoHtml(dados, escHtml, nlHtml);
+}
+
+function gerarHtmlNotificacaoCompleto(dados) {
+  const corpo = corpoNotificacaoHtml(dados, escHtml, nlHtml);
   return `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
-<head><meta charset="UTF-8"><title>Notificação ${esc(dados.numero)}</title>
+<head><meta charset="UTF-8"><title>Notificação de medida disciplinar</title>
 <style>
   @page { size: A4; margin: 2.5cm 2cm 2cm 2cm; }
   body { font-family: Calibri, Arial, sans-serif; font-size: 12pt; color:#000; line-height:1.5; }
-  .cabecalho-orgao { text-align:center; margin-bottom: 18pt; }
-  .cabecalho-orgao p { margin:0; line-height:1.3; }
-  h1 { text-align:center; font-size:13pt; margin: 0 0 18pt; }
-  .numero { font-weight:bold; }
-  .data-doc { text-align:right; margin-bottom: 18pt; }
+  h4 { text-align:center; font-size:13pt; margin: 0 0 18pt; }
   p { text-align: left; margin: 0 0 12pt; }
-  ul { margin: 0 0 12pt; padding-left: 24pt; }
   .campo-label { font-weight:bold; }
   .rodape-italico { font-style: italic; margin-top: 18pt; }
-  .assinatura { margin-top: 40pt; text-align:center; }
 </style>
 </head>
-<body>
-  <div class="cabecalho-orgao">
-    <p><strong>MINISTÉRIO DA EDUCAÇÃO</strong></p>
-    <p>INSTITUTO FEDERAL DE EDUCAÇÃO, CIÊNCIA E TECNOLOGIA DE MATO GROSSO</p>
-    <p>Campus Lucas do Rio Verde</p>
-    <p>Diretoria de Ensino</p>
-  </div>
-
-  <p class="numero">NOTIFICAÇÃO Nº ${esc(dados.numero)}</p>
-  <p class="data-doc">Campus Lucas do Rio Verde, ${esc(dados.dataFormatadaExtenso)}</p>
-
-  <h1>NOTIFICAÇÃO DE APLICAÇÃO DE MEDIDA DISCIPLINAR</h1>
-
-  <p>${nl(dados.textoPrincipal)}</p>
-
-  <p>${nl(dados.fundamentacao)}</p>
-
-  ${dados.considerandos ? `<p>${nl(dados.considerandos)}</p>` : ""}
-
-  <p><span class="campo-label">Tipo de falta disciplinar:</span> ${esc(dados.tipoFalta)}.<br>
-  <span class="campo-label">Medida disciplinar:</span> ${esc(dados.medida)}</p>
-
-  <p class="rodape-italico">${nl(dados.rodape)}</p>
-
-  <div class="assinatura">
-    <p>_______________________________________________</p>
-    <p>Diretoria de Ensino — IFMT Campus Lucas do Rio Verde</p>
-  </div>
-</body>
+<body>${corpo}</body>
 </html>`;
+}
+
+function textoNotificacaoPuro(dados) {
+  let partes = [
+    "NOTIFICAÇÃO DE APLICAÇÃO DE MEDIDA DISCIPLINAR",
+    "",
+    dados.textoPrincipal,
+    "",
+    dados.fundamentacao
+  ];
+  if (dados.considerandos) partes.push("", dados.considerandos);
+  partes.push("", `Tipo de falta disciplinar: ${dados.tipoFalta}.`, `Medida disciplinar: ${dados.medida}`);
+  partes.push("", dados.rodape);
+  return partes.join("\n");
 }
 
 function downloadComoDoc(nomeArquivo, html) {
@@ -95,6 +96,33 @@ function downloadComoDoc(nomeArquivo, html) {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function imprimirPreviaNotificacao() {
+  const conteudo = el("previa-documento").innerHTML;
+  const janela = window.open("", "_blank");
+  janela.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Notificação de medida disciplinar</title>
+    <style>
+      body { font-family: Calibri, Arial, sans-serif; font-size: 12pt; color:#000; line-height:1.5; padding: 2cm; }
+      h4 { text-align:center; font-size:13pt; margin: 0 0 18pt; }
+      p { margin: 0 0 12pt; }
+      .campo-label { font-weight:bold; }
+      .rodape-italico { font-style: italic; margin-top: 18pt; }
+    </style></head><body>${conteudo}</body></html>`);
+  janela.document.close();
+  janela.focus();
+  setTimeout(() => janela.print(), 300);
+}
+
+async function copiarTextoNotificacao(dados) {
+  const texto = textoNotificacaoPuro(dados);
+  try {
+    await navigator.clipboard.writeText(texto);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function dataExtenso(isoOuVazia) {

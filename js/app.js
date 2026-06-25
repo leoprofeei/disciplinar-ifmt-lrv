@@ -216,7 +216,30 @@ function atualizarPreviewNivel() {
     </div>`;
 }
 
+let cacheDiscentesAutocomplete = [];
+
+async function carregarDiscentesAutocomplete() {
+  const { data } = await listarTodasOcorrencias();
+  cacheDiscentesAutocomplete = agruparPorDiscente(data);
+  el("lista-discentes").innerHTML = cacheDiscentesAutocomplete.map((g) => `<option value="${g.nome}">`).join("");
+}
+
+function configurarAutocompletarDiscente() {
+  carregarDiscentesAutocomplete();
+
+  el("f-nome").addEventListener("input", () => {
+    const nomeDigitado = el("f-nome").value.trim();
+    const encontrado = cacheDiscentesAutocomplete.find((g) => g.nome.toLowerCase() === nomeDigitado.toLowerCase());
+    if (encontrado) {
+      el("f-matricula").value = encontrado.matricula;
+      el("f-curso").value = encontrado.curso;
+    }
+  });
+}
+
 function configurarFormularioLancamento() {
+  configurarAutocompletarDiscente();
+
   el("form-lancamento").addEventListener("submit", async (e) => {
     e.preventDefault();
     const msg = el("msg-salvo");
@@ -230,7 +253,7 @@ function configurarFormularioLancamento() {
       dataFalta: el("f-data").value,
       inciso: el("f-inciso").value,
       descricao: el("f-desc").value.trim(),
-      menorIdade: el("f-menor").value === "sim"
+      menorIdade: false
     };
 
     if (!payload.nomeDiscente || !payload.matricula || !payload.curso || !payload.dataFalta || !payload.inciso) {
@@ -253,6 +276,7 @@ function configurarFormularioLancamento() {
 
     el("form-lancamento").reset();
     await renderizarListaOcorrencias();
+    await carregarDiscentesAutocomplete();
   });
 }
 
@@ -742,7 +766,7 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
     type: "bar",
     data: {
       labels: cursosLabels,
-      datasets: [{ label: "Ocorrências", data: cursosValores, backgroundColor: "#5DCAA5" }]
+      datasets: [{ label: "Ocorrências", data: cursosValores, backgroundColor: "#A8DADC" }]
     },
     options: {
       plugins: {
@@ -798,12 +822,12 @@ function renderizarGraficoPeriodo(ocorrencias) {
   });
 
   const anos = Object.keys(porAnoMes).sort();
-  const tonsTeal = ["#0F6E56", "#1D9E75", "#5DCAA5", "#9FE1CB"];
-  // Ano mais recente fica com o teal mais escuro; anos anteriores ficam progressivamente mais claros.
+  const tonsAzulClaro = ["#7FC4C7", "#A8DADC", "#C3E6E7", "#D6EDEE"];
+  // Ano mais recente fica com o tom mais forte; anos anteriores ficam progressivamente mais claros.
   const datasets = anos.map((ano, i) => ({
     label: ano,
     data: porAnoMes[ano],
-    backgroundColor: tonsTeal[(anos.length - 1 - i) % tonsTeal.length]
+    backgroundColor: tonsAzulClaro[(anos.length - 1 - i) % tonsAzulClaro.length]
   }));
 
   const ctxPeriodo = el("grafico-periodo").getContext("2d");
@@ -1133,7 +1157,6 @@ function abrirModalVisualizar(id, lista) {
     <div class="detalhe-linha"><span class="detalhe-label">Inciso</span><span class="detalhe-valor">Art. 11, ${o.inciso}</span></div>
     <div class="detalhe-linha"><span class="detalhe-label">Nível</span><span class="detalhe-valor">${badge(o.nivel)}</span></div>
     <div class="detalhe-linha"><span class="detalhe-label">Descrição</span><span class="detalhe-valor">${o.descricao || "—"}</span></div>
-    <div class="detalhe-linha"><span class="detalhe-label">Menor de idade</span><span class="detalhe-valor">${o.menor_idade ? "Sim" : "Não"}</span></div>
     <div class="detalhe-linha"><span class="detalhe-label">Registrado por</span><span class="detalhe-valor">${o.registrado_por_nome || "—"}</span></div>`;
 
   const podeGerenciar = usuarioAtual.papel === "admin" || o.registrado_por === usuarioAtual.id;

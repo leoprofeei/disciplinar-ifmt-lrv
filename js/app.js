@@ -119,7 +119,7 @@ async function iniciarAposLogin() {
     return;
   }
   el("usuario-nome").textContent = perfil.nome_completo;
-  el("usuario-papel").textContent = perfil.papel === "coordenacao" ? "Coordenação de Curso" : perfil.papel === "chefia" ? "Chefia do Departamento de Ensino" : "Administrador";
+  el("usuario-papel").textContent = PAPEL_LABEL[perfil.papel] || perfil.papel;
 
   const ehAdmin = perfil.papel === "admin";
   el("subtab-lote").style.display = ehAdmin ? "inline-flex" : "none";
@@ -168,6 +168,9 @@ function configurarBuscaInciso(idBusca, idOculto, idPreview) {
     const codigo = textoIncisoParaCodigo(el(idBusca).value);
     el(idOculto).value = codigo;
     if (idPreview) atualizarPreviewNivel();
+  });
+  el(idBusca).addEventListener("focus", () => {
+    el(idBusca).select();
   });
 }
 
@@ -799,6 +802,7 @@ function configurarModalConvite() {
 const OPCOES_PAPEL = [
   { valor: "coordenacao", label: "Coordenação de Curso" },
   { valor: "chefia", label: "Chefia do Departamento de Ensino" },
+  { valor: "apoio", label: "Apoio Departamento de Ensino" },
   { valor: "admin", label: "Administrador" }
 ];
 
@@ -1095,6 +1099,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   preencherDatalistIncisos();
   configurarBuscaInciso("f-inciso-busca", "f-inciso", true);
   configurarBuscaInciso("edit-inciso-busca", "edit-inciso", false);
+  el("f-curso").addEventListener("focus", () => el("f-curso").select());
+  el("edit-curso").addEventListener("focus", () => el("edit-curso").select());
 
   el("busca-ocorrencias").addEventListener("input", aplicarFiltroOcorrencias);
   el("p-busca").addEventListener("input", () => {

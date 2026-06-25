@@ -24,6 +24,7 @@ const PAPEL_LABEL = {
   pendente: "Pendente",
   coordenacao: "Coordenação de Curso",
   chefia: "Chefia do Departamento de Ensino",
+  apoio: "Apoio Departamento de Ensino",
   admin: "Administrador"
 };
 

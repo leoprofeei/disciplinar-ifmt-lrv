@@ -724,11 +724,14 @@ let graficoPeriodo = null;
 function renderizarGraficoPeriodo(ocorrencias) {
   const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const porAnoMes = {};
+  const porAnoMesNivel = {};
   ocorrencias.forEach((o) => {
     const [ano, mes] = o.data_falta.split("-");
     const m = parseInt(mes, 10) - 1;
     if (!porAnoMes[ano]) porAnoMes[ano] = new Array(12).fill(0);
     porAnoMes[ano][m]++;
+    if (!porAnoMesNivel[ano]) porAnoMesNivel[ano] = Array.from({ length: 12 }, () => ({ leve: 0, media: 0, grave: 0, gravissima: 0 }));
+    porAnoMesNivel[ano][m][o.nivel]++;
   });
 
   const anos = Object.keys(porAnoMes).sort();
@@ -746,7 +749,22 @@ function renderizarGraficoPeriodo(ocorrencias) {
     data: { labels: meses, datasets },
     options: {
       plugins: {
-        legend: { display: anos.length > 1, position: "bottom", labels: { font: { size: 12 } } }
+        legend: { display: anos.length > 1, position: "bottom", labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y} ocorrência(s)`,
+            afterLabel: (ctx) => {
+              const ano = ctx.dataset.label;
+              const mesIdx = ctx.dataIndex;
+              const porNivel = porAnoMesNivel[ano] && porAnoMesNivel[ano][mesIdx];
+              if (!porNivel) return "";
+              return [
+                ` Leve: ${porNivel.leve} · Média: ${porNivel.media}`,
+                ` Grave: ${porNivel.grave} · Gravíssima: ${porNivel.gravissima}`
+              ];
+            }
+          }
+        }
       },
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
     }

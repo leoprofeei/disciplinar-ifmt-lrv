@@ -729,6 +729,68 @@ function fixarDetalheGrafico(idDiv, texto) {
   divEl.classList.add("visivel");
 }
 
+const IDS_DETALHE_GRAFICOS = ["detalhe-grafico-niveis", "detalhe-grafico-cursos", "detalhe-grafico-alertas", "detalhe-grafico-periodo"];
+
+function fecharTodosDetalhesGraficos() {
+  IDS_DETALHE_GRAFICOS.forEach((id) => {
+    const divEl = el(id);
+    if (divEl) {
+      divEl.classList.remove("visivel");
+      divEl.dataset.textoAtual = "";
+    }
+  });
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.tagName === "CANVAS") return;
+  fecharTodosDetalhesGraficos();
+});
+
+function imprimirGrafico(idCanvas, titulo) {
+  const canvasEl = el(idCanvas);
+  const imagemDataUrl = canvasEl.toDataURL("image/png");
+  const janela = window.open("", "_blank");
+  janela.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>${titulo}</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 30px; text-align: center; }
+      h1 { font-size: 16px; color: #1B6B45; margin-bottom: 20px; }
+      img { max-width: 100%; }
+    </style></head><body>
+      <h1>${titulo}</h1>
+      <img src="${imagemDataUrl}">
+    </body></html>`);
+  janela.document.close();
+  janela.focus();
+  setTimeout(() => janela.print(), 300);
+}
+
+async function copiarGraficoComoImagem(idCanvas, botaoEl) {
+  const canvasEl = el(idCanvas);
+  try {
+    const blob = await new Promise((resolve) => canvasEl.toBlob(resolve, "image/png"));
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    mostrarToast("Imagem do gráfico copiada. Você já pode colar em outro programa.", "sucesso");
+  } catch (e) {
+    mostrarToast("Não foi possível copiar a imagem automaticamente neste navegador.", "erro");
+  }
+}
+
+function configurarAcoesGraficos() {
+  document.querySelectorAll(".btn-grafico-imprimir").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      imprimirGrafico(btn.dataset.canvas, btn.dataset.titulo);
+    };
+  });
+  document.querySelectorAll(".btn-grafico-copiar").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      copiarGraficoComoImagem(btn.dataset.canvas, btn);
+    };
+  });
+}
+
 function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolvido) {
   const coresNivel = { leve: "#378ADD", media: "#7F77DD", grave: "#D85A30", gravissima: "#A32D2D" };
   const contagemNivel = { leve: 0, media: 0, grave: 0, gravissima: 0 };
@@ -760,7 +822,7 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
         }
       },
       onClick: (evt, elementos) => {
-        if (!elementos.length) return;
+        if (!elementos.length) { fecharTodosDetalhesGraficos(); return; }
         const idx = elementos[0].index;
         const label = ["Leve", "Média", "Grave", "Gravíssima"][idx];
         const qtd = [contagemNivel.leve, contagemNivel.media, contagemNivel.grave, contagemNivel.gravissima][idx];
@@ -807,7 +869,7 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
       },
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
       onClick: (evt, elementos) => {
-        if (!elementos.length) return;
+        if (!elementos.length) { fecharTodosDetalhesGraficos(); return; }
         const idx = elementos[0].index;
         const curso = cursosLabels[idx];
         const total = cursosValores[idx];
@@ -833,7 +895,7 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
     options: {
       plugins: { legend: { position: "bottom", labels: { font: { size: 12 } } } },
       onClick: (evt, elementos) => {
-        if (!elementos.length) return;
+        if (!elementos.length) { fecharTodosDetalhesGraficos(); return; }
         const idx = elementos[0].index;
         const label = ["Em alerta (ativo)", "Alerta resolvido"][idx];
         const qtd = [qtdAlertaAtivo, qtdAlertaResolvido][idx];
@@ -843,6 +905,7 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
   });
 
   renderizarGraficoPeriodo(ocorrencias);
+  configurarAcoesGraficos();
 }
 
 let graficoPeriodo = null;
@@ -895,7 +958,7 @@ function renderizarGraficoPeriodo(ocorrencias) {
       },
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
       onClick: (evt, elementos) => {
-        if (!elementos.length) return;
+        if (!elementos.length) { fecharTodosDetalhesGraficos(); return; }
         const el0 = elementos[0];
         const ano = datasets[el0.datasetIndex].label;
         const mesIdx = el0.index;

@@ -655,6 +655,26 @@ textarea { resize: vertical; line-height: 1.55; }
 }
 .detalhe-grafico-fixado.visivel { display: block; }
 
+.cabecalho-grafico {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.acoes-grafico {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.acoes-grafico button {
+  padding: 5px 9px;
+  font-size: 14px;
+  line-height: 1;
+}
+
 .metric-label {
   font-size: 14.3px;
   color: var(--muted);

@@ -231,19 +231,37 @@
 
       <div class="linha-form" style="margin:16px 0;">
         <div class="pei-card">
-          <div class="pei-card-title">Ocorrências por nível</div>
+          <div class="cabecalho-grafico">
+            <div class="pei-card-title" style="margin:0;">Ocorrências por nível</div>
+            <div class="acoes-grafico">
+              <button class="btn-grafico-imprimir" data-canvas="grafico-niveis" data-titulo="Ocorrências por nível" title="Imprimir"><i class="ti ti-printer"></i></button>
+              <button class="btn-grafico-copiar" data-canvas="grafico-niveis" title="Copiar imagem"><i class="ti ti-copy"></i></button>
+            </div>
+          </div>
           <canvas id="grafico-niveis" height="220"></canvas>
           <div id="detalhe-grafico-niveis" class="detalhe-grafico-fixado"></div>
         </div>
         <div class="pei-card">
-          <div class="pei-card-title">Ocorrências por curso</div>
+          <div class="cabecalho-grafico">
+            <div class="pei-card-title" style="margin:0;">Ocorrências por curso</div>
+            <div class="acoes-grafico">
+              <button class="btn-grafico-imprimir" data-canvas="grafico-cursos" data-titulo="Ocorrências por curso" title="Imprimir"><i class="ti ti-printer"></i></button>
+              <button class="btn-grafico-copiar" data-canvas="grafico-cursos" title="Copiar imagem"><i class="ti ti-copy"></i></button>
+            </div>
+          </div>
           <canvas id="grafico-cursos" height="220"></canvas>
           <div id="detalhe-grafico-cursos" class="detalhe-grafico-fixado"></div>
         </div>
       </div>
 
       <div class="pei-card" style="margin-bottom:16px;">
-        <div class="pei-card-title">Alertas de progressão — ativos x resolvidos</div>
+        <div class="cabecalho-grafico">
+          <div class="pei-card-title" style="margin:0;">Alertas de progressão — ativos x resolvidos</div>
+          <div class="acoes-grafico">
+            <button class="btn-grafico-imprimir" data-canvas="grafico-alertas" data-titulo="Alertas de progressão" title="Imprimir"><i class="ti ti-printer"></i></button>
+            <button class="btn-grafico-copiar" data-canvas="grafico-alertas" title="Copiar imagem"><i class="ti ti-copy"></i></button>
+          </div>
+        </div>
         <div style="max-width:340px; margin:0 auto;">
           <canvas id="grafico-alertas" height="220"></canvas>
         </div>
@@ -251,7 +269,13 @@
       </div>
 
       <div class="pei-card" style="margin-bottom:16px;">
-        <div class="pei-card-title">Ocorrências por período</div>
+        <div class="cabecalho-grafico">
+          <div class="pei-card-title" style="margin:0;">Ocorrências por período</div>
+          <div class="acoes-grafico">
+            <button class="btn-grafico-imprimir" data-canvas="grafico-periodo" data-titulo="Ocorrências por período" title="Imprimir"><i class="ti ti-printer"></i></button>
+            <button class="btn-grafico-copiar" data-canvas="grafico-periodo" title="Copiar imagem"><i class="ti ti-copy"></i></button>
+          </div>
+        </div>
         <canvas id="grafico-periodo" height="220"></canvas>
         <div id="detalhe-grafico-periodo" class="detalhe-grafico-fixado"></div>
       </div>

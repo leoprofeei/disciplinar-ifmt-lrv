@@ -313,6 +313,11 @@ button:hover { background: var(--fundo); }
   background: transparent;
 }
 
+.aba-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.08);
+  color: #FFE7A0;
+}
+
 .aba-badge {
   display: inline-flex;
   align-items: center;
@@ -361,6 +366,48 @@ button:hover { background: var(--fundo); }
   border-bottom-color: #F2B705;
   border-bottom-width: 4px;
   background: transparent;
+}
+
+.subtab-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.08);
+  color: #FFE7A0;
+}
+
+/* ===== Sistema de notificação flutuante (toast) ===== */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+}
+
+.toast {
+  border-radius: var(--raio);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: toast-entrar 0.25s ease;
+}
+
+.toast-sucesso { background: var(--cor-leve-fundo); color: var(--cor-leve); border: 1px solid var(--cor-leve); }
+.toast-erro { background: var(--cor-gravissima-fundo); color: var(--cor-gravissima); border: 1px solid var(--cor-gravissima); }
+.toast-info { background: var(--verde3); color: var(--verde2); border: 1px solid var(--verde); }
+
+@keyframes toast-entrar {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 640px) {
+  #toast-container { left: 12px; right: 12px; top: 12px; max-width: none; }
 }
 
 /* ===== Modal de edição ===== */
@@ -434,7 +481,7 @@ button:hover { background: var(--fundo); }
   margin: 0 0 16px;
 }
 
-.previa-documento p { margin: 0 0 12px; }
+.previa-documento p { margin: 0 0 12px; text-align: justify; }
 .previa-documento .campo-label { font-weight: 700; }
 .previa-documento .rodape-italico { font-style: italic; margin-top: 16px; }
 

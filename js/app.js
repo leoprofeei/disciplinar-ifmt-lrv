@@ -13,6 +13,35 @@ function formatarData(iso) {
   return iso.split("-").reverse().join("/");
 }
 
+// -------------------- Toast (notificação flutuante) --------------------
+
+function mostrarToast(texto, tipo) {
+  const container = el("toast-container");
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${tipo || "info"}`;
+  const icone = tipo === "erro" ? "✕" : tipo === "sucesso" ? "✓" : "ℹ";
+  toast.innerHTML = `<span>${icone}</span><span>${texto}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = "opacity 0.3s";
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+function definirMsg(msgEl, texto, tipo) {
+  msgEl.textContent = texto;
+  msgEl.className = tipo ? `msg msg-${tipo}` : "msg";
+  if (tipo === "sucesso" || tipo === "erro") {
+    mostrarToast(texto, tipo);
+  }
+}
+
+function confirmarFecharComAlteracoes(callbackFechar) {
+  const ok = confirm("Tem certeza? As alterações serão perdidas.");
+  if (ok) callbackFechar();
+}
+
 // -------------------- Telas --------------------
 
 function mostrarTela(tela) {
@@ -44,8 +73,7 @@ function configurarTelaLogin() {
     msg.textContent = "Entrando...";
     const { error } = await entrar(email, senha);
     if (error) {
-      msg.textContent = "Erro: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro: " + error.message, "erro");
       return;
     }
     await iniciarAposLogin();
@@ -60,12 +88,10 @@ function configurarTelaLogin() {
     msg.textContent = "Criando conta...";
     const { error } = await cadastrar(email, senha, nome);
     if (error) {
-      msg.textContent = "Erro: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro: " + error.message, "erro");
       return;
     }
-    msg.textContent = "Conta criada! Verifique seu e-mail para confirmar, depois faça login. Seu acesso ficará pendente de aprovação.";
-    msg.className = "msg msg-sucesso";
+        definirMsg(msg, "Conta criada! Verifique seu e-mail para confirmar, depois faça login. Seu acesso ficará pendente de aprovação.", "sucesso");
     el("form-cadastro").reset();
   });
 
@@ -98,12 +124,10 @@ function configurarTelaLogin() {
     msg.className = "msg";
     const { error } = await enviarRecuperacaoSenha(email);
     if (error) {
-      msg.textContent = "Erro: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro: " + error.message, "erro");
       return;
     }
-    msg.textContent = "Se este e-mail estiver cadastrado, você receberá um link para definir uma nova senha em poucos minutos.";
-    msg.className = "msg msg-sucesso";
+        definirMsg(msg, "Se este e-mail estiver cadastrado, você receberá um link para definir uma nova senha em poucos minutos.", "sucesso");
     el("form-esqueci").reset();
   });
 }
@@ -207,15 +231,13 @@ function configurarFormularioLancamento() {
     };
 
     if (!payload.nomeDiscente || !payload.matricula || !payload.curso || !payload.dataFalta || !payload.inciso) {
-      msg.textContent = "Preencha nome, matrícula, curso, data e inciso.";
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Preencha nome, matrícula, curso, data e inciso.", "erro");
       return;
     }
 
     const { error, nivel } = await registrarOcorrencia(payload);
     if (error) {
-      msg.textContent = "Erro ao salvar: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro ao salvar: " + error.message, "erro");
       return;
     }
 
@@ -224,6 +246,7 @@ function configurarFormularioLancamento() {
 
     msg.className = "msg msg-sucesso";
     msg.innerHTML = `Ocorrência registrada. Nível: ${badge(nivel)}. ` + (sit.alerta ? `<br><span class="texto-alerta">${sit.alerta.msg}</span>` : "Sem alertas de progressão neste momento.");
+    mostrarToast(`Ocorrência registrada — nível ${NIVEIS[nivel].label}`, "sucesso");
 
     el("form-lancamento").reset();
     await renderizarListaOcorrencias();
@@ -313,9 +336,9 @@ async function confirmarExclusao(id) {
 }
 
 function configurarModalEdicao() {
-  el("btn-cancelar-edicao").addEventListener("click", fecharModalEdicao);
+  el("btn-cancelar-edicao").addEventListener("click", () => confirmarFecharComAlteracoes(fecharModalEdicao));
   el("modal-editar").addEventListener("click", (e) => {
-    if (e.target.id === "modal-editar") fecharModalEdicao();
+    if (e.target.id === "modal-editar") confirmarFecharComAlteracoes(fecharModalEdicao);
   });
 
   el("btn-salvar-edicao").addEventListener("click", async () => {
@@ -331,8 +354,7 @@ function configurarModalEdicao() {
     };
 
     if (!payload.nomeDiscente || !payload.matricula || !payload.curso || !payload.dataFalta || !payload.inciso) {
-      msg.textContent = "Preencha nome, matrícula, curso, data e inciso.";
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Preencha nome, matrícula, curso, data e inciso.", "erro");
       return;
     }
 
@@ -340,8 +362,7 @@ function configurarModalEdicao() {
     msg.className = "msg";
     const { error } = await editarOcorrencia(el("edit-id").value, payload);
     if (error) {
-      msg.textContent = "Erro: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro: " + error.message, "erro");
       return;
     }
     fecharModalEdicao();
@@ -613,6 +634,7 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
   const coresNivel = { leve: "#378ADD", media: "#7F77DD", grave: "#D85A30", gravissima: "#A32D2D" };
   const contagemNivel = { leve: 0, media: 0, grave: 0, gravissima: 0 };
   ocorrencias.forEach((o) => { contagemNivel[o.nivel] = (contagemNivel[o.nivel] || 0) + 1; });
+  const totalOcorrencias = ocorrencias.length || 1;
 
   const ctxNiveis = el("grafico-niveis").getContext("2d");
   if (graficoNiveis) graficoNiveis.destroy();
@@ -625,12 +647,28 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
         backgroundColor: [coresNivel.leve, coresNivel.media, coresNivel.grave, coresNivel.gravissima]
       }]
     },
-    options: { plugins: { legend: { position: "bottom", labels: { font: { size: 12 } } } } }
+    options: {
+      plugins: {
+        legend: { position: "bottom", labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const qtd = ctx.parsed;
+              const pct = ((qtd / totalOcorrencias) * 100).toFixed(1);
+              return ` ${ctx.label}: ${qtd} ocorrência(s) — ${pct}% do total`;
+            }
+          }
+        }
+      }
+    }
   });
 
   const contagemCurso = {};
+  const contagemCursoPorNivel = {};
   grupos.forEach((g) => {
     contagemCurso[g.curso] = (contagemCurso[g.curso] || 0) + g.ocorrencias.length;
+    if (!contagemCursoPorNivel[g.curso]) contagemCursoPorNivel[g.curso] = { leve: 0, media: 0, grave: 0, gravissima: 0 };
+    g.ocorrencias.forEach((o) => { contagemCursoPorNivel[g.curso][o.nivel]++; });
   });
   const cursosLabels = Object.keys(contagemCurso);
   const cursosValores = Object.values(contagemCurso);
@@ -644,7 +682,22 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
       datasets: [{ label: "Ocorrências", data: cursosValores, backgroundColor: "#F2B705" }]
     },
     options: {
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` Total: ${ctx.parsed.y} ocorrência(s)`,
+            afterLabel: (ctx) => {
+              const porNivel = contagemCursoPorNivel[ctx.label];
+              if (!porNivel) return "";
+              return [
+                ` Leve: ${porNivel.leve} · Média: ${porNivel.media}`,
+                ` Grave: ${porNivel.grave} · Gravíssima: ${porNivel.gravissima}`
+              ];
+            }
+          }
+        }
+      },
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
     }
   });
@@ -661,6 +714,42 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
       }]
     },
     options: { plugins: { legend: { position: "bottom", labels: { font: { size: 12 } } } } }
+  });
+
+  renderizarGraficoPeriodo(ocorrencias);
+}
+
+let graficoPeriodo = null;
+
+function renderizarGraficoPeriodo(ocorrencias) {
+  const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const porAnoMes = {};
+  ocorrencias.forEach((o) => {
+    const [ano, mes] = o.data_falta.split("-");
+    const m = parseInt(mes, 10) - 1;
+    if (!porAnoMes[ano]) porAnoMes[ano] = new Array(12).fill(0);
+    porAnoMes[ano][m]++;
+  });
+
+  const anos = Object.keys(porAnoMes).sort();
+  const coresPorAno = ["#888780", "#7F77DD", "#1D9E75", "#D85A30"];
+  const datasets = anos.map((ano, i) => ({
+    label: ano,
+    data: porAnoMes[ano],
+    backgroundColor: coresPorAno[i % coresPorAno.length]
+  }));
+
+  const ctxPeriodo = el("grafico-periodo").getContext("2d");
+  if (graficoPeriodo) graficoPeriodo.destroy();
+  graficoPeriodo = new Chart(ctxPeriodo, {
+    type: "bar",
+    data: { labels: meses, datasets },
+    options: {
+      plugins: {
+        legend: { display: anos.length > 1, position: "bottom", labels: { font: { size: 12 } } }
+      },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
   });
 }
 
@@ -713,12 +802,10 @@ function configurarImportacaoLote() {
     msg.className = "msg";
     try {
       const linhas = await lerPlanilha(arquivo);
-      msg.textContent = `${linhas.length} linha(s) encontrada(s).`;
-      msg.className = "msg msg-sucesso";
+            definirMsg(msg, `${linhas.length} linha(s) encontrada(s).`, "sucesso");
       renderizarPreviaLote(linhas);
     } catch (err) {
-      msg.textContent = "Erro ao ler a planilha: " + err.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro ao ler a planilha: " + err.message, "erro");
     }
   });
 
@@ -726,20 +813,17 @@ function configurarImportacaoLote() {
     const msg = el("msg-lote-confirmacao");
     const validas = importacaoLinhas.filter((l) => l.valido);
     if (!validas.length) {
-      msg.textContent = "Nenhuma linha válida para importar.";
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Nenhuma linha válida para importar.", "erro");
       return;
     }
     msg.textContent = `Importando ${validas.length} ocorrência(s)...`;
     msg.className = "msg";
     const resultado = await importarLinhasValidas(importacaoLinhas);
     if (resultado.erro) {
-      msg.textContent = "Não foi possível importar: " + resultado.erro;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Não foi possível importar: " + resultado.erro, "erro");
       return;
     }
-    msg.textContent = `Importação concluída: ${resultado.sucesso} salva(s), ${resultado.falha} com falha.`;
-    msg.className = "msg msg-sucesso";
+        definirMsg(msg, `Importação concluída: ${resultado.sucesso} salva(s), ${resultado.falha} com falha.`, "sucesso");
     el("f-arquivo-lote").value = "";
     el("lote-preview-wrap").style.display = "none";
     importacaoLinhas = [];
@@ -763,9 +847,9 @@ function fecharModalConvite() {
 
 function configurarModalConvite() {
   el("btn-abrir-convite").addEventListener("click", abrirModalConvite);
-  el("btn-cancelar-convite").addEventListener("click", fecharModalConvite);
+  el("btn-cancelar-convite").addEventListener("click", () => confirmarFecharComAlteracoes(fecharModalConvite));
   el("modal-convite").addEventListener("click", (e) => {
-    if (e.target.id === "modal-convite") fecharModalConvite();
+    if (e.target.id === "modal-convite") confirmarFecharComAlteracoes(fecharModalConvite);
   });
 
   el("btn-enviar-convite").addEventListener("click", async () => {
@@ -775,8 +859,7 @@ function configurarModalConvite() {
     const papel = el("convite-papel").value;
 
     if (!nomeCompleto || !email) {
-      msg.textContent = "Preencha nome e e-mail.";
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Preencha nome e e-mail.", "erro");
       return;
     }
 
@@ -785,13 +868,11 @@ function configurarModalConvite() {
 
     const { error } = await convidarUsuario({ nomeCompleto, email, papel });
     if (error) {
-      msg.textContent = "Erro: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro: " + error.message, "erro");
       return;
     }
 
-    msg.textContent = "Convite enviado com sucesso para " + email + ".";
-    msg.className = "msg msg-sucesso";
+        definirMsg(msg, "Convite enviado com sucesso para " + email + ".", "sucesso");
     await renderizarAdministracao();
     setTimeout(fecharModalConvite, 1500);
   });
@@ -847,8 +928,7 @@ async function renderizarAdministracao() {
 
   const { data: pendentes, error: erroPendentes } = await listarUsuariosPendentes();
   if (erroPendentes) {
-    msg.textContent = "Erro ao carregar pendentes: " + erroPendentes.message;
-    msg.className = "msg msg-erro";
+        definirMsg(msg, "Erro ao carregar pendentes: " + erroPendentes.message, "erro");
     return;
   }
 
@@ -868,8 +948,7 @@ async function renderizarAdministracao() {
 
   const { data: todos, error: erroTodos } = await listarTodosUsuarios();
   if (erroTodos) {
-    msg.textContent = "Erro ao carregar usuários: " + erroTodos.message;
-    msg.className = "msg msg-erro";
+        definirMsg(msg, "Erro ao carregar usuários: " + erroTodos.message, "erro");
     return;
   }
 
@@ -884,12 +963,10 @@ async function renderizarAdministracao() {
       msg.className = "msg";
       const { error } = await enviarRecuperacaoSenha(email);
       if (error) {
-        msg.textContent = "Erro: " + error.message;
-        msg.className = "msg msg-erro";
+                definirMsg(msg, "Erro: " + error.message, "erro");
         return;
       }
-      msg.textContent = `E-mail de recuperação enviado para ${email}.`;
-      msg.className = "msg msg-sucesso";
+            definirMsg(msg, `E-mail de recuperação enviado para ${email}.`, "sucesso");
     });
   });
 
@@ -899,20 +976,17 @@ async function renderizarAdministracao() {
       const select = document.querySelector(`select[data-userid="${userId}"]`);
       const novoPapel = select.value;
       if (!novoPapel) {
-        msg.textContent = "Selecione um papel antes de aplicar.";
-        msg.className = "msg msg-erro";
+                definirMsg(msg, "Selecione um papel antes de aplicar.", "erro");
         return;
       }
       msg.textContent = "Atualizando...";
       msg.className = "msg";
       const { error } = await alterarPapelUsuario(userId, novoPapel);
       if (error) {
-        msg.textContent = "Erro: " + error.message;
-        msg.className = "msg msg-erro";
+                definirMsg(msg, "Erro: " + error.message, "erro");
         return;
       }
-      msg.textContent = "Papel atualizado com sucesso.";
-      msg.className = "msg msg-sucesso";
+            definirMsg(msg, "Papel atualizado com sucesso.", "sucesso");
       await renderizarAdministracao();
     });
   });
@@ -927,12 +1001,10 @@ async function renderizarAdministracao() {
       msg.className = "msg";
       const { error } = await removerUsuario(userId);
       if (error) {
-        msg.textContent = "Erro: " + error.message;
-        msg.className = "msg msg-erro";
+                definirMsg(msg, "Erro: " + error.message, "erro");
         return;
       }
-      msg.textContent = `Usuário "${nome}" removido com sucesso.`;
-      msg.className = "msg msg-sucesso";
+            definirMsg(msg, `Usuário "${nome}" removido com sucesso.`, "sucesso");
       await renderizarAdministracao();
     });
   });
@@ -961,17 +1033,16 @@ function fecharModalAlerta() {
 }
 
 function configurarModalAlerta() {
-  el("btn-cancelar-alerta").addEventListener("click", fecharModalAlerta);
+  el("btn-cancelar-alerta").addEventListener("click", () => confirmarFecharComAlteracoes(fecharModalAlerta));
   el("modal-alerta").addEventListener("click", (e) => {
-    if (e.target.id === "modal-alerta") fecharModalAlerta();
+    if (e.target.id === "modal-alerta") confirmarFecharComAlteracoes(fecharModalAlerta);
   });
 
   el("btn-confirmar-alerta").addEventListener("click", async () => {
     const msg = el("msg-alerta");
     const dataAcao = el("alerta-data").value;
     if (!dataAcao) {
-      msg.textContent = "Informe a data da ação.";
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Informe a data da ação.", "erro");
       return;
     }
     msg.textContent = "Salvando...";
@@ -987,8 +1058,7 @@ function configurarModalAlerta() {
     });
 
     if (error) {
-      msg.textContent = "Erro: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro: " + error.message, "erro");
       return;
     }
 
@@ -1049,9 +1119,9 @@ function fecharPreviaNotificacao() {
 }
 
 function configurarModalNotificacao() {
-  el("btn-cancelar-notificacao").addEventListener("click", fecharModalNotificacao);
+  el("btn-cancelar-notificacao").addEventListener("click", () => confirmarFecharComAlteracoes(fecharModalNotificacao));
   el("modal-notificacao").addEventListener("click", (e) => {
-    if (e.target.id === "modal-notificacao") fecharModalNotificacao();
+    if (e.target.id === "modal-notificacao") confirmarFecharComAlteracoes(fecharModalNotificacao);
   });
 
   el("btn-ver-previa-notificacao").addEventListener("click", abrirPreviaNotificacao);
@@ -1062,7 +1132,7 @@ function configurarModalNotificacao() {
   });
 
   el("modal-previa-notificacao").addEventListener("click", (e) => {
-    if (e.target.id === "modal-previa-notificacao") fecharPreviaNotificacao();
+    if (e.target.id === "modal-previa-notificacao") confirmarFecharComAlteracoes(fecharPreviaNotificacao);
   });
 
   el("btn-imprimir-notificacao").addEventListener("click", imprimirPreviaNotificacao);
@@ -1071,8 +1141,13 @@ function configurarModalNotificacao() {
     const dados = coletarDadosNotificacaoForm();
     const ok = await copiarTextoNotificacao(dados);
     const msg = el("msg-previa-notificacao");
-    msg.textContent = ok ? "Texto copiado para a área de transferência." : "Não foi possível copiar automaticamente. Selecione e copie manualmente.";
-    msg.className = ok ? "msg msg-sucesso" : "msg msg-erro";
+    definirMsg(
+      msg,
+      ok
+        ? "Texto copiado para a área de transferência. Você pode colar o texto copiado no documento Notificação em criação no SUAP."
+        : "Não foi possível copiar automaticamente. Selecione e copie manualmente.",
+      ok ? "sucesso" : "erro"
+    );
   });
 
   el("btn-baixar-notificacao").addEventListener("click", () => {
@@ -1158,13 +1233,11 @@ function configurarFormularioDefinirSenha() {
     const confirmar = el("nova-senha-confirmar").value;
 
     if (senha.length < 6) {
-      msg.textContent = "A senha deve ter pelo menos 6 caracteres.";
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "A senha deve ter pelo menos 6 caracteres.", "erro");
       return;
     }
     if (senha !== confirmar) {
-      msg.textContent = "As senhas não coincidem.";
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "As senhas não coincidem.", "erro");
       return;
     }
 
@@ -1173,13 +1246,11 @@ function configurarFormularioDefinirSenha() {
 
     const { error } = await definirNovaSenha(senha);
     if (error) {
-      msg.textContent = "Erro ao salvar senha: " + error.message;
-      msg.className = "msg msg-erro";
+            definirMsg(msg, "Erro ao salvar senha: " + error.message, "erro");
       return;
     }
 
-    msg.textContent = "Senha definida com sucesso! Entrando...";
-    msg.className = "msg msg-sucesso";
+        definirMsg(msg, "Senha definida com sucesso! Entrando...", "sucesso");
     history.replaceState(null, "", window.location.pathname);
     setTimeout(() => iniciarAposLogin(), 800);
   });

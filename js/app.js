@@ -223,6 +223,7 @@ function configurarFormularioLancamento() {
     msg.innerHTML = `Ocorrência registrada. Nível: ${badge(nivel)}. ` + (sit.alerta ? `<br><span class="texto-alerta">${sit.alerta.msg}</span>` : "Sem alertas de progressão neste momento.");
 
     el("form-lancamento").reset();
+    await renderizarListaOcorrencias();
   });
 }
 
@@ -357,8 +358,30 @@ async function preencherSelectAlunos() {
   cacheResolucoesAlertas = resolucoes;
   renderizarOpcoesDiscentes(cacheGruposDiscentes);
   atualizarBadgePainel();
-  if (cacheGruposDiscentes.length) renderizarPainelAluno(cacheGruposDiscentes[0].matricula);
-  el("p-select").onchange = (e) => renderizarPainelAluno(e.target.value);
+  el("p-select").onchange = (e) => {
+    if (e.target.value) {
+      renderizarPainelAluno(e.target.value);
+    } else {
+      mostrarTelaInicialPainel();
+    }
+  };
+
+  const emAlerta = gruposEmAlertaNaoResolvido();
+  if (emAlerta.length) {
+    el("p-select").value = emAlerta[0].matricula;
+    renderizarPainelAluno(emAlerta[0].matricula);
+  } else {
+    mostrarTelaInicialPainel();
+  }
+}
+
+function mostrarTelaInicialPainel() {
+  el("p-select").value = "";
+  el("p-conteudo").innerHTML = `
+    <div class="pei-card" style="text-align:center; padding:2.5rem 1.5rem;">
+      <p style="font-size:16px; font-weight:600; color:var(--verde2); margin-bottom:6px;">Selecione um discente para começar</p>
+      <p class="muted" style="font-size:13.5px;">Use a busca ou a lista acima para abrir o histórico disciplinar de um discente específico.</p>
+    </div>`;
 }
 
 function alertaEstaResolvido(matricula, ultimaOcorrenciaData) {
@@ -384,7 +407,9 @@ function atualizarBadgePainel() {
 }
 
 function renderizarOpcoesDiscentes(grupos) {
-  el("p-select").innerHTML = grupos.map((g) => `<option value="${g.matricula}">${g.nome} — ${g.matricula}</option>`).join("");
+  el("p-select").innerHTML =
+    '<option value="">Selecione um discente...</option>' +
+    grupos.map((g) => `<option value="${g.matricula}">${g.nome} — ${g.matricula}</option>`).join("");
 }
 
 function abrirPainelParaMatricula(matricula) {
@@ -715,6 +740,7 @@ function configurarImportacaoLote() {
     el("f-arquivo-lote").value = "";
     el("lote-preview-wrap").style.display = "none";
     importacaoLinhas = [];
+    await renderizarListaOcorrencias();
   });
 }
 
@@ -1077,7 +1103,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? cacheGruposDiscentes
       : cacheGruposDiscentes.filter((g) => g.nome.toLowerCase().includes(termo) || g.matricula.toLowerCase().includes(termo));
     renderizarOpcoesDiscentes(filtrados);
-    if (filtrados.length) renderizarPainelAluno(filtrados[0].matricula);
+    if (filtrados.length) {
+      renderizarPainelAluno(filtrados[0].matricula);
+    } else {
+      mostrarTelaInicialPainel();
+    }
   });
 
   el("tab-lanc").addEventListener("click", () => mostrarAba("lanc"));

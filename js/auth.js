@@ -8,7 +8,10 @@ async function cadastrar(email, senha, nomeCompleto) {
   const { data, error } = await supabaseClient.auth.signUp({
     email,
     password: senha,
-    options: { data: { nome_completo: nomeCompleto } }
+    options: {
+      data: { nome_completo: nomeCompleto },
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
   });
   return { data, error };
 }

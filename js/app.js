@@ -717,6 +717,18 @@ let graficoNiveis = null;
 let graficoCursos = null;
 let graficoAlertas = null;
 
+function fixarDetalheGrafico(idDiv, texto) {
+  const divEl = el(idDiv);
+  if (divEl.classList.contains("visivel") && divEl.dataset.textoAtual === texto) {
+    divEl.classList.remove("visivel");
+    divEl.dataset.textoAtual = "";
+    return;
+  }
+  divEl.innerHTML = texto;
+  divEl.dataset.textoAtual = texto;
+  divEl.classList.add("visivel");
+}
+
 function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolvido) {
   const coresNivel = { leve: "#378ADD", media: "#7F77DD", grave: "#D85A30", gravissima: "#A32D2D" };
   const contagemNivel = { leve: 0, media: 0, grave: 0, gravissima: 0 };
@@ -746,6 +758,14 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
             }
           }
         }
+      },
+      onClick: (evt, elementos) => {
+        if (!elementos.length) return;
+        const idx = elementos[0].index;
+        const label = ["Leve", "Média", "Grave", "Gravíssima"][idx];
+        const qtd = [contagemNivel.leve, contagemNivel.media, contagemNivel.grave, contagemNivel.gravissima][idx];
+        const pct = ((qtd / totalOcorrencias) * 100).toFixed(1);
+        fixarDetalheGrafico("detalhe-grafico-niveis", `${label}: ${qtd} ocorrência(s) — ${pct}% do total`);
       }
     }
   });
@@ -785,7 +805,17 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
           }
         }
       },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      onClick: (evt, elementos) => {
+        if (!elementos.length) return;
+        const idx = elementos[0].index;
+        const curso = cursosLabels[idx];
+        const total = cursosValores[idx];
+        const porNivel = contagemCursoPorNivel[curso];
+        const texto = `<strong>${curso}</strong> — Total: ${total} ocorrência(s)<br>
+          Leve: ${porNivel.leve} · Média: ${porNivel.media} · Grave: ${porNivel.grave} · Gravíssima: ${porNivel.gravissima}`;
+        fixarDetalheGrafico("detalhe-grafico-cursos", texto);
+      }
     }
   });
 
@@ -800,7 +830,16 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
         backgroundColor: ["#A32D2D", "#1D9E75"]
       }]
     },
-    options: { plugins: { legend: { position: "bottom", labels: { font: { size: 12 } } } } }
+    options: {
+      plugins: { legend: { position: "bottom", labels: { font: { size: 12 } } } },
+      onClick: (evt, elementos) => {
+        if (!elementos.length) return;
+        const idx = elementos[0].index;
+        const label = ["Em alerta (ativo)", "Alerta resolvido"][idx];
+        const qtd = [qtdAlertaAtivo, qtdAlertaResolvido][idx];
+        fixarDetalheGrafico("detalhe-grafico-alertas", `${label}: ${qtd} discente(s)`);
+      }
+    }
   });
 
   renderizarGraficoPeriodo(ocorrencias);
@@ -854,7 +893,18 @@ function renderizarGraficoPeriodo(ocorrencias) {
           }
         }
       },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      onClick: (evt, elementos) => {
+        if (!elementos.length) return;
+        const el0 = elementos[0];
+        const ano = datasets[el0.datasetIndex].label;
+        const mesIdx = el0.index;
+        const qtd = porAnoMes[ano][mesIdx];
+        const porNivel = porAnoMesNivel[ano][mesIdx];
+        const texto = `<strong>${meses[mesIdx]}/${ano}</strong> — Total: ${qtd} ocorrência(s)<br>
+          Leve: ${porNivel.leve} · Média: ${porNivel.media} · Grave: ${porNivel.grave} · Gravíssima: ${porNivel.gravissima}`;
+        fixarDetalheGrafico("detalhe-grafico-periodo", texto);
+      }
     }
   });
 }

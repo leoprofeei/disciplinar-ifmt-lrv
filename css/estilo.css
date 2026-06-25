@@ -642,6 +642,19 @@ textarea { resize: vertical; line-height: 1.55; }
   background: var(--verde3);
 }
 
+.detalhe-grafico-fixado {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--verde3);
+  border-left: 3px solid var(--verde);
+  border-radius: var(--raio);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--verde2);
+  display: none;
+}
+.detalhe-grafico-fixado.visivel { display: block; }
+
 .metric-label {
   font-size: 14.3px;
   color: var(--muted);

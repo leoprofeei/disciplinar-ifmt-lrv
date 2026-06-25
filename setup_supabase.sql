@@ -9,7 +9,7 @@ create table public.perfis (
   id uuid references auth.users on delete cascade primary key,
   nome_completo text not null,
   email text not null,
-  papel text not null default 'pendente' check (papel in ('pendente', 'coordenacao', 'chefia', 'admin')),
+  papel text not null default 'pendente' check (papel in ('pendente', 'coordenacao', 'chefia', 'apoio', 'admin')),
   curso_responsavel text,
   criado_em timestamp with time zone default now()
 );
@@ -75,7 +75,7 @@ create policy "aprovados_leem_ocorrencias"
   using (
     exists (
       select 1 from public.perfis
-      where id = auth.uid() and papel in ('coordenacao', 'chefia', 'admin')
+      where id = auth.uid() and papel in ('coordenacao', 'chefia', 'apoio', 'admin')
     )
   );
 
@@ -85,7 +85,7 @@ create policy "aprovados_inserem_ocorrencias"
   with check (
     exists (
       select 1 from public.perfis
-      where id = auth.uid() and papel in ('coordenacao', 'chefia', 'admin')
+      where id = auth.uid() and papel in ('coordenacao', 'chefia', 'apoio', 'admin')
     )
   );
 

@@ -190,7 +190,7 @@ begin
     raise exception 'Apenas administradores podem alterar papéis de usuários.';
   end if;
 
-  if p_novo_papel not in ('pendente', 'coordenacao', 'chefia', 'admin') then
+  if p_novo_papel not in ('pendente', 'coordenacao', 'chefia', 'apoio', 'admin') then
     raise exception 'Papel inválido: %', p_novo_papel;
   end if;
 

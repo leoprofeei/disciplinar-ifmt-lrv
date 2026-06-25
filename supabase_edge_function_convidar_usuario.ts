@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!["coordenacao", "chefia", "admin"].includes(papel)) {
+    if (!["coordenacao", "chefia", "apoio", "admin"].includes(papel)) {
       return new Response(JSON.stringify({ error: "Papel inválido." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }

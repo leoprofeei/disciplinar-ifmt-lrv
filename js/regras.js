@@ -105,7 +105,7 @@ function calcularSituacao(lista) {
   let alerta = null;
 
   if (porNivel.leve >= 2 && porNivel.media === 0 && porNivel.grave === 0 && porNivel.gravissima === 0) {
-    alerta = { tipo: "leve_para_media", msg: "Atenção: reincidência em falta leve. Próxima ocorrência pode ser reclassificada para MÉDIA (Art. 17, §1º)." };
+    alerta = { tipo: "leve_para_media", msg: "Atenção: esta é a 2ª falta leve registrada. Conforme o Art. 15, I do Regulamento, esta ocorrência já pode ser reclassificada como MÉDIA. Caso o(a) discente seja menor de idade, o Art. 17, §1º também determina convocar os responsáveis." };
   }
   if (porNivel.media >= 1) nivelAtual = "media";
   if (porNivel.media >= 2) {
@@ -124,7 +124,7 @@ function calcularSituacao(lista) {
 }
 
 const ACOES_SUGERIDAS_ALERTA = {
-  leve_para_media: ["Advertência verbal reforçada", "Orientação registrada com responsáveis", "Outra providência"],
+  leve_para_media: ["Reclassificado como falta MÉDIA (advertência escrita)", "Mantido como leve com orientação reforçada", "Convocados os responsáveis (discente menor de idade)", "Outra providência"],
   media_para_grave: ["Advertência escrita aplicada", "Atividade pedagógica extracurricular aplicada", "Outra providência"],
   grave_para_gravissima: ["Processo Disciplinar Discente (PDD) instaurado via Comissão", "Suspensão/cancelamento de benefício aplicado", "Outra providência"],
   gravissima_direta: ["Encaminhado à Direção-Geral para instauração de PDD", "Medida disciplinar aplicada", "Outra providência"]

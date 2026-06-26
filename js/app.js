@@ -775,6 +775,7 @@ function fecharTodosDetalhesGraficos() {
       divEl.dataset.textoAtual = "";
     }
   });
+  Object.keys(cacheUltimoRankingPorGrafico).forEach((k) => { cacheUltimoRankingPorGrafico[k] = null; });
 }
 
 document.addEventListener("click", (e) => {
@@ -802,13 +803,20 @@ function descricaoPeriodoGrafico(idCanvas) {
 async function gerarImagemGraficoComMoldura(idCanvas, tituloGrafico) {
   const canvasOriginal = el(idCanvas);
   const logoImg = await carregarLogoComoImagem();
+  const detalheAberto = cacheUltimoRankingPorGrafico[idCanvas];
 
   const larguraFinal = Math.max(canvasOriginal.width, 640);
   const alturaCabecalho = 90;
   const alturaRodape = 60;
   const padding = 24;
   const alturaGrafico = canvasOriginal.height;
-  const alturaFinal = alturaCabecalho + alturaGrafico + alturaRodape + padding * 2;
+
+  const alturaLinhaRanking = 22;
+  const alturaBlocoRanking = detalheAberto
+    ? 34 + detalheAberto.ranking.length * alturaLinhaRanking + 30
+    : 0;
+
+  const alturaFinal = alturaCabecalho + alturaGrafico + alturaBlocoRanking + alturaRodape + padding * 2;
 
   const canvasFinal = document.createElement("canvas");
   canvasFinal.width = larguraFinal;
@@ -833,13 +841,45 @@ async function gerarImagemGraficoComMoldura(idCanvas, tituloGrafico) {
   ctx.fillText("Resolução 113/2025 RTR-CONSUP/RTR/IFMT", 90, 56);
 
   ctx.fillStyle = "#1B6B45";
-  ctx.font = "bold 14px Arial";
-  ctx.fillText(tituloGrafico, padding, alturaCabecalho + 22);
+  ctx.font = "bold 16px Arial";
+  ctx.fillText(tituloGrafico, padding, alturaCabecalho + 24);
   ctx.fillStyle = "#777777";
   ctx.font = "11px Arial";
-  ctx.fillText(descricaoPeriodoGrafico(idCanvas), padding, alturaCabecalho + 38);
+  ctx.fillText(descricaoPeriodoGrafico(idCanvas), padding, alturaCabecalho + 40);
 
   ctx.drawImage(canvasOriginal, (larguraFinal - canvasOriginal.width) / 2, alturaCabecalho + 46);
+
+  let yAtual = alturaCabecalho + 46 + alturaGrafico + 16;
+
+  if (detalheAberto) {
+    ctx.fillStyle = "#27500A";
+    ctx.font = "bold 13px Arial";
+    ctx.fillText(detalheAberto.titulo, padding, yAtual);
+    yAtual += 18;
+    ctx.font = "bold 12px Arial";
+    ctx.fillText("Todas as infrações registradas:", padding, yAtual);
+    yAtual += 14;
+
+    detalheAberto.ranking.forEach((item) => {
+      yAtual += alturaLinhaRanking;
+      ctx.beginPath();
+      ctx.fillStyle = CORES_NIVEL_PONTO[item.nivel];
+      ctx.arc(padding + 5, yAtual - 5, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#333333";
+      ctx.font = "12px Arial";
+      const textoItem = `Art. 11, ${item.inciso} — ${item.descricao}`;
+      const textoTruncado = textoItem.length > 70 ? textoItem.slice(0, 67) + "..." : textoItem;
+      ctx.fillText(textoTruncado, padding + 18, yAtual);
+
+      ctx.fillStyle = "#666666";
+      ctx.font = "bold 12px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(String(item.qtd), larguraFinal - padding, yAtual);
+      ctx.textAlign = "left";
+    });
+  }
 
   const agora = new Date();
   const dataExportacao = agora.toLocaleDateString("pt-BR") + " às " + agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -882,10 +922,51 @@ function configurarAcoesGraficos() {
   });
 }
 
+function montarRankingInfracoes(ocorrenciasFiltradas) {
+  const contagem = {};
+  ocorrenciasFiltradas.forEach((o) => {
+    const chave = o.inciso;
+    if (!contagem[chave]) {
+      const info = incisoInfo(o.inciso);
+      contagem[chave] = { inciso: o.inciso, descricao: info ? info[1] : "", nivel: o.nivel, qtd: 0 };
+    }
+    contagem[chave].qtd++;
+  });
+  return Object.values(contagem).sort((a, b) => b.qtd - a.qtd);
+}
+
+const CORES_NIVEL_PONTO = { leve: "#378ADD", media: "#7F77DD", grave: "#D85A30", gravissima: "#A32D2D" };
+const cacheUltimoRankingPorGrafico = {};
+
+function htmlRankingInfracoes(ranking) {
+  const linhas = ranking
+    .map(
+      (item) => `<div class="linha-ranking-infracao">
+        <span class="ponto-nivel" style="background:${CORES_NIVEL_PONTO[item.nivel]}"></span>
+        <span class="texto-infracao">Art. 11, ${item.inciso} — ${item.descricao}</span>
+        <span class="badge-contador">${item.qtd}</span>
+      </div>`
+    )
+    .join("");
+
+  const legenda = `<div class="legenda-niveis-ranking">
+    <span><span class="ponto-nivel" style="background:${CORES_NIVEL_PONTO.leve}"></span>Leve</span>
+    <span><span class="ponto-nivel" style="background:${CORES_NIVEL_PONTO.media}"></span>Média</span>
+    <span><span class="ponto-nivel" style="background:${CORES_NIVEL_PONTO.grave}"></span>Grave</span>
+    <span><span class="ponto-nivel" style="background:${CORES_NIVEL_PONTO.gravissima}"></span>Gravíssima</span>
+  </div>`;
+
+  return `<div class="lista-ranking-infracoes">${linhas}</div>${legenda}`;
+}
+
 function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolvido) {
   const coresNivel = { leve: "#378ADD", media: "#7F77DD", grave: "#D85A30", gravissima: "#A32D2D" };
   const contagemNivel = { leve: 0, media: 0, grave: 0, gravissima: 0 };
-  ocorrencias.forEach((o) => { contagemNivel[o.nivel] = (contagemNivel[o.nivel] || 0) + 1; });
+  const ocorrenciasPorNivel = { leve: [], media: [], grave: [], gravissima: [] };
+  ocorrencias.forEach((o) => {
+    contagemNivel[o.nivel] = (contagemNivel[o.nivel] || 0) + 1;
+    if (ocorrenciasPorNivel[o.nivel]) ocorrenciasPorNivel[o.nivel].push(o);
+  });
   const totalOcorrencias = ocorrencias.length || 1;
 
   const ctxNiveis = el("grafico-niveis").getContext("2d");
@@ -913,22 +994,33 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
         }
       },
       onClick: (evt, elementos) => {
-        if (!elementos.length) { fecharTodosDetalhesGraficos(); return; }
+        if (!elementos.length) { fecharTodosDetalhesGraficos(); cacheUltimoRankingPorGrafico["grafico-niveis"] = null; return; }
         const idx = elementos[0].index;
+        const chaveNivel = ["leve", "media", "grave", "gravissima"][idx];
         const label = ["Leve", "Média", "Grave", "Gravíssima"][idx];
-        const qtd = [contagemNivel.leve, contagemNivel.media, contagemNivel.grave, contagemNivel.gravissima][idx];
+        const qtd = contagemNivel[chaveNivel];
         const pct = ((qtd / totalOcorrencias) * 100).toFixed(1);
-        fixarDetalheGrafico("detalhe-grafico-niveis", `${label}: ${qtd} ocorrência(s) — ${pct}% do total`);
+        const ranking = montarRankingInfracoes(ocorrenciasPorNivel[chaveNivel]);
+        cacheUltimoRankingPorGrafico["grafico-niveis"] = { titulo: `${label} — ${qtd} ocorrência(s) (${pct}% do total)`, ranking };
+        const texto = `${label}: ${qtd} ocorrência(s) — ${pct}% do total<br><br>
+          <strong>Todas as infrações registradas:</strong>
+          ${htmlRankingInfracoes(ranking)}`;
+        fixarDetalheGrafico("detalhe-grafico-niveis", texto);
       }
     }
   });
 
   const contagemCurso = {};
   const contagemCursoPorNivel = {};
+  const ocorrenciasPorCurso = {};
   grupos.forEach((g) => {
     contagemCurso[g.curso] = (contagemCurso[g.curso] || 0) + g.ocorrencias.length;
     if (!contagemCursoPorNivel[g.curso]) contagemCursoPorNivel[g.curso] = { leve: 0, media: 0, grave: 0, gravissima: 0 };
-    g.ocorrencias.forEach((o) => { contagemCursoPorNivel[g.curso][o.nivel]++; });
+    if (!ocorrenciasPorCurso[g.curso]) ocorrenciasPorCurso[g.curso] = [];
+    g.ocorrencias.forEach((o) => {
+      contagemCursoPorNivel[g.curso][o.nivel]++;
+      ocorrenciasPorCurso[g.curso].push(o);
+    });
   });
   const cursosLabels = Object.keys(contagemCurso);
   const cursosValores = Object.values(contagemCurso);
@@ -960,13 +1052,17 @@ function renderizarGraficos(ocorrencias, grupos, qtdAlertaAtivo, qtdAlertaResolv
       },
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
       onClick: (evt, elementos) => {
-        if (!elementos.length) { fecharTodosDetalhesGraficos(); return; }
+        if (!elementos.length) { fecharTodosDetalhesGraficos(); cacheUltimoRankingPorGrafico["grafico-cursos"] = null; return; }
         const idx = elementos[0].index;
         const curso = cursosLabels[idx];
         const total = cursosValores[idx];
         const porNivel = contagemCursoPorNivel[curso];
+        const ranking = montarRankingInfracoes(ocorrenciasPorCurso[curso]);
+        cacheUltimoRankingPorGrafico["grafico-cursos"] = { titulo: `${curso} — ${total} ocorrência(s)`, ranking };
         const texto = `<strong>${curso}</strong> — Total: ${total} ocorrência(s)<br>
-          Leve: ${porNivel.leve} · Média: ${porNivel.media} · Grave: ${porNivel.grave} · Gravíssima: ${porNivel.gravissima}`;
+          Leve: ${porNivel.leve} · Média: ${porNivel.media} · Grave: ${porNivel.grave} · Gravíssima: ${porNivel.gravissima}<br><br>
+          <strong>Todas as infrações registradas:</strong>
+          ${htmlRankingInfracoes(ranking)}`;
         fixarDetalheGrafico("detalhe-grafico-cursos", texto);
       }
     }

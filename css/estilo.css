@@ -655,6 +655,62 @@ textarea { resize: vertical; line-height: 1.55; }
 }
 .detalhe-grafico-fixado.visivel { display: block; }
 
+.lista-ranking-infracoes {
+  margin-top: 6px;
+  max-height: 112px;
+  overflow-y: auto;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.linha-ranking-infracao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-size: 13px;
+}
+.linha-ranking-infracao:last-child { border-bottom: none; }
+
+.ponto-nivel {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.texto-infracao { flex: 1; }
+
+.badge-contador {
+  flex-shrink: 0;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.legenda-niveis-ranking {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+.legenda-niveis-ranking span { display: inline-flex; align-items: center; gap: 4px; }
+.legenda-niveis-ranking .ponto-nivel { width: 7px; height: 7px; }
+
+@media print {
+  .lista-ranking-infracoes { max-height: none; overflow-y: visible; }
+}
+
 .cabecalho-grafico {
   display: flex;
   justify-content: space-between;
@@ -667,6 +723,12 @@ textarea { resize: vertical; line-height: 1.55; }
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.cabecalho-grafico .pei-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--verde2);
 }
 
 .acoes-grafico button {
